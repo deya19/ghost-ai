@@ -18,6 +18,7 @@ change.
 - Installed lucide-react
 - Created lib/utils.ts with cn() helper
 - Configured dark mode as default
+- 02-editor-chrome: Editor Navbar, Project Sidebar, Dialog Pattern ready for future use
 
 ## In Progress
 
