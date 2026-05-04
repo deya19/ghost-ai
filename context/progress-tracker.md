@@ -21,6 +21,7 @@ change.
 - 02-editor-chrome: Editor Navbar, Project Sidebar, Dialog Pattern ready for future use
 - 03-auth: Clerk integration with sign-in/sign-up pages, route protection, UserButton in navbar
 - 04-project-dialogs: Editor home screen, Create/Rename/Delete dialogs, sidebar actions with mock data, mobile backdrop
+- 05-prisma: Project/ProjectCollaborator schema, Prisma client singleton (pg adapter / Accelerate branch), migration applied
 
 ## In Progress
 
