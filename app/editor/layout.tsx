@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
+import { ProjectDialogs } from "@/components/editor/project-dialogs"
+import { useProjectDialogs } from "@/hooks/use-project-dialogs"
+import { EditorDialogsContext } from "@/context/editor-dialogs-context"
 
 export default function EditorLayout({
   children,
@@ -10,6 +13,7 @@ export default function EditorLayout({
   children: React.ReactNode
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const dialogs = useProjectDialogs()
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -21,9 +25,16 @@ export default function EditorLayout({
       <ProjectSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        onCreateProject={dialogs.openCreate}
+        onRenameProject={dialogs.openRename}
+        onDeleteProject={dialogs.openDelete}
       />
 
-      <main className="pt-14">{children}</main>
+      <ProjectDialogs {...dialogs} />
+
+      <EditorDialogsContext.Provider value={{ openCreate: dialogs.openCreate }}>
+        <main className="pt-14">{children}</main>
+      </EditorDialogsContext.Provider>
     </div>
   )
 }
