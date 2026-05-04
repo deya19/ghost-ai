@@ -16,6 +16,7 @@ export function ProjectSidebar({
   onClose,
   className,
 }: ProjectSidebarProps) {
+
   return (
     <aside
       className={cn(

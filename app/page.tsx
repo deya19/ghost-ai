@@ -1,13 +1,12 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <div className="flex h-screen flex-col items-center justify-center bg-background">
-      <h1 className="text-2xl font-medium text-foreground">ghost AI</h1>
-      <Link href="/editor" className="mt-4">
-        <Button>Open Editor</Button>
-      </Link>
-    </div>
-  )
+export default async function Home() {
+  const { userId } = await auth();
+
+  if (userId) {
+    redirect("/editor");
+  } else {
+    redirect("/sign-in");
+  }
 }

@@ -19,6 +19,7 @@ change.
 - Created lib/utils.ts with cn() helper
 - Configured dark mode as default
 - 02-editor-chrome: Editor Navbar, Project Sidebar, Dialog Pattern ready for future use
+- 03-auth: Clerk integration with sign-in/sign-up pages, route protection, UserButton in navbar
 
 ## In Progress
 
