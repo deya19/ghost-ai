@@ -9,7 +9,7 @@ change.
 
 ## Current Goal
 
-- [Next feature to implement]
+- 04-project-dialogs: Editor home screen, Create/Rename/Delete project dialogs, sidebar actions
 
 ## Completed
 
@@ -19,6 +19,8 @@ change.
 - Created lib/utils.ts with cn() helper
 - Configured dark mode as default
 - 02-editor-chrome: Editor Navbar, Project Sidebar, Dialog Pattern ready for future use
+- 03-auth: Clerk integration with sign-in/sign-up pages, route protection, UserButton in navbar
+- 04-project-dialogs: Editor home screen, Create/Rename/Delete dialogs, sidebar actions with mock data, mobile backdrop
 
 ## In Progress
 
