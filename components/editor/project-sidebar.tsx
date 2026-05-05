@@ -7,18 +7,12 @@ import { X, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Project } from "@/types/project"
 
-const MOCK_MY_PROJECTS: Project[] = [
-  { id: "1", name: "E-Commerce Platform", slug: "e-commerce-platform", owned: true },
-  { id: "2", name: "Auth Service", slug: "auth-service", owned: true },
-]
-
-const MOCK_SHARED_PROJECTS: Project[] = [
-  { id: "3", name: "Shared Monorepo", slug: "shared-monorepo", owned: false },
-]
-
 interface ProjectSidebarProps {
   isOpen: boolean
   onClose: () => void
+  ownedProjects: Project[]
+  sharedProjects: Project[]
+  onSelectProject: (project: Project) => void
   onCreateProject: () => void
   onRenameProject: (project: Project) => void
   onDeleteProject: (project: Project) => void
@@ -28,6 +22,9 @@ interface ProjectSidebarProps {
 export function ProjectSidebar({
   isOpen,
   onClose,
+  ownedProjects,
+  sharedProjects,
+  onSelectProject,
   onCreateProject,
   onRenameProject,
   onDeleteProject,
@@ -80,18 +77,22 @@ export function ProjectSidebar({
 
             <div className="flex-1 overflow-auto p-4">
               <TabsContent value="my-projects">
-                {MOCK_MY_PROJECTS.length === 0 ? (
+                {ownedProjects.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                     No projects yet
                   </div>
                 ) : (
                   <ul className="space-y-1">
-                    {MOCK_MY_PROJECTS.map((project) => (
+                    {ownedProjects.map((project) => (
                       <li key={project.id} className="relative">
                         <div className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50">
-                          <span className="truncate text-sm text-foreground">
+                          <button
+                            className="min-w-0 flex-1 truncate text-left text-sm text-foreground"
+                            onClick={() => onSelectProject(project)}
+                            type="button"
+                          >
                             {project.name}
-                          </span>
+                          </button>
                           <div className="relative ml-2 shrink-0">
                             <Button
                               variant="ghost"
@@ -135,19 +136,21 @@ export function ProjectSidebar({
               </TabsContent>
 
               <TabsContent value="shared">
-                {MOCK_SHARED_PROJECTS.length === 0 ? (
+                {sharedProjects.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                     No shared projects
                   </div>
                 ) : (
                   <ul className="space-y-1">
-                    {MOCK_SHARED_PROJECTS.map((project) => (
+                    {sharedProjects.map((project) => (
                       <li key={project.id}>
-                        <div className="flex items-center rounded-lg px-3 py-2 hover:bg-muted/50">
-                          <span className="truncate text-sm text-foreground">
+                        <button
+                          className="flex w-full items-center rounded-lg px-3 py-2 text-left hover:bg-muted/50"
+                          onClick={() => onSelectProject(project)}
+                          type="button"
+                        >
                             {project.name}
-                          </span>
-                        </div>
+                        </button>
                       </li>
                     ))}
                   </ul>
