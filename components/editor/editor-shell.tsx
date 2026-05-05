@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
@@ -12,7 +12,7 @@ import { Project } from "@/types/project"
 interface EditorShellProps {
   ownedProjects: Project[]
   sharedProjects: Project[]
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export function EditorShell({

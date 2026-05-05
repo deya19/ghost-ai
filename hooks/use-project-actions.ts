@@ -22,6 +22,7 @@ function shortSuffix() {
 export function useProjectActions() {
   const router = useRouter()
   const pathname = usePathname()
+  const [error, setError] = useState<string | null>(null)
 
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null)
   const [name, setName] = useState("")
@@ -72,7 +73,7 @@ export function useProjectActions() {
       })
 
       if (!res.ok) {
-        setIsLoading(false)
+        setError("Failed to create project")
         return
       }
 
@@ -87,6 +88,7 @@ export function useProjectActions() {
   }, [name, roomIdPreview, router, close])
 
   const renameProject = useCallback(async () => {
+    setError(null)
     if (!target) return
 
     setIsLoading(true)
@@ -98,7 +100,7 @@ export function useProjectActions() {
       })
 
       if (!res.ok) {
-        setIsLoading(false)
+        setError("Failed to rename project")
         return
       }
 
@@ -112,6 +114,7 @@ export function useProjectActions() {
   }, [target, name, router, close])
 
   const deleteProject = useCallback(async () => {
+    setError(null)
     if (!target) return
 
     setIsLoading(true)
@@ -121,7 +124,7 @@ export function useProjectActions() {
       })
 
       if (!res.ok) {
-        setIsLoading(false)
+        setError("Failed to delete project")
         return
       }
 
@@ -151,6 +154,7 @@ export function useProjectActions() {
     target,
     isLoading,
     roomIdPreview,
+    error,
     openCreate,
     openRename,
     openDelete,

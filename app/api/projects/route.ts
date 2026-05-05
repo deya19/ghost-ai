@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 
 export async function GET() {
   const { userId } = await auth()
@@ -9,12 +10,15 @@ export async function GET() {
     return new NextResponse("Unauthorized", { status: 401 })
   }
 
-  const projects = await prisma.project.findMany({
-    where: { ownerId: userId },
-    orderBy: { createdAt: "desc" },
-  })
-
-  return NextResponse.json(projects)
+  try {
+    const projects = await prisma.project.findMany({
+      where: { ownerId: userId },
+      orderBy: { createdAt: "desc" },
+    })
+    return NextResponse.json(projects)
+  } catch (err) {
+    return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 })
+  }
 }
 
 export async function POST(request: Request) {
@@ -41,13 +45,19 @@ export async function POST(request: Request) {
   }
       
 
-  const project = await prisma.project.create({
-    data: {
-      ...(id ? { id } : {}),
-      ownerId: userId,
-      name,
-    },
-  })
-
-  return NextResponse.json(project, { status: 201 })
+  try {
+    const project = await prisma.project.create({
+      data: {
+        ...(id ? { id } : {}),
+        ownerId: userId,
+        name,
+      },
+    })
+    return NextResponse.json(project, { status: 201 })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return NextResponse.json({ error: "Conflict: project with this ID already exists" }, { status: 409 })
+    }
+    return NextResponse.json({ error: "Failed to create project" }, { status: 500 })
+  }
 }
