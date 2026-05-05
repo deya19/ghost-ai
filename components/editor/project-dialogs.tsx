@@ -10,26 +10,30 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useProjectDialogs } from "@/hooks/use-project-dialogs"
+import { useProjectActions } from "@/hooks/use-project-actions"
 
-type Props = ReturnType<typeof useProjectDialogs>
+interface ProjectDialogsProps {
+  actions: ReturnType<typeof useProjectActions>
+}
 
-export function ProjectDialogs({
-  dialog,
-  form,
-  setForm,
-  isLoading,
-  slug,
-  close,
-  handleCreate,
-  handleRename,
-  handleDelete,
-}: Props) {
+export function ProjectDialogs({ actions }: ProjectDialogsProps) {
+  const {
+    dialogOpen,
+    name,
+    setName,
+    target,
+    isLoading,
+    roomIdPreview,
+    close,
+    createProject,
+    renameProject,
+    deleteProject,
+  } = actions
 
   return (
     <>
       {/* Create Project Dialog */}
-      <Dialog open={dialog.open === "create"} onOpenChange={(open) => !open && close()}>
+      <Dialog open={dialogOpen === "create"} onOpenChange={(open) => !open && close()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create project</DialogTitle>
@@ -41,23 +45,21 @@ export function ProjectDialogs({
           <div className="space-y-3">
             <Input
               placeholder="Project name"
-              value={form.name}
-              onChange={(e) => setForm({ name: e.target.value })}
-              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && createProject()}
               autoFocus
             />
-            {form.name.trim() && (
-              <p className="text-xs text-muted-foreground">
-                Slug: <span className="font-mono">{slug}</span>
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              Room ID: <span className="font-mono">{roomIdPreview}</span>
+            </p>
           </div>
 
           <DialogFooter>
             <Button variant="ghost" onClick={close} disabled={isLoading}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={!form.name.trim() || isLoading}>
+            <Button onClick={createProject} disabled={isLoading}>
               Create
             </Button>
           </DialogFooter>
@@ -65,28 +67,28 @@ export function ProjectDialogs({
       </Dialog>
 
       {/* Rename Project Dialog */}
-      <Dialog open={dialog.open === "rename"} onOpenChange={(open) => !open && close()}>
+      <Dialog open={dialogOpen === "rename"} onOpenChange={(open) => !open && close()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename project</DialogTitle>
             <DialogDescription>
-              Renaming &ldquo;{dialog.target?.name}&rdquo;
+              Renaming &ldquo;{target?.name}&rdquo;
             </DialogDescription>
           </DialogHeader>
 
           <Input
             autoFocus
             placeholder="New project name"
-            value={form.name}
-            onChange={(e) => setForm({ name: e.target.value })}
-            onKeyDown={(e) => e.key === "Enter" && handleRename()}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && renameProject()}
           />
 
           <DialogFooter>
             <Button variant="ghost" onClick={close} disabled={isLoading}>
               Cancel
             </Button>
-            <Button onClick={handleRename} disabled={!form.name.trim() || isLoading}>
+            <Button onClick={renameProject} disabled={!name.trim() || isLoading}>
               Rename
             </Button>
           </DialogFooter>
@@ -94,12 +96,12 @@ export function ProjectDialogs({
       </Dialog>
 
       {/* Delete Project Dialog */}
-      <Dialog open={dialog.open === "delete"} onOpenChange={(open) => !open && close()}>
+      <Dialog open={dialogOpen === "delete"} onOpenChange={(open) => !open && close()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete project</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{dialog.target?.name}&rdquo;? This action cannot be undone.
+              Are you sure you want to delete &ldquo;{target?.name}&rdquo;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
@@ -107,7 +109,7 @@ export function ProjectDialogs({
             <Button variant="ghost" onClick={close} disabled={isLoading}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isLoading}>
+            <Button variant="destructive" onClick={deleteProject} disabled={isLoading}>
               Delete
             </Button>
           </DialogFooter>
