@@ -25,24 +25,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <ClerkProvider
+      appearance={{
+        theme: dark,
+        variables: {
+          borderRadius: "var(--radius)",
+          colorBackground: "var(--bg-base)",
+          colorPrimary: "var(--accent-primary)",
+        },
+      }}
+    >
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ClerkProvider
-          appearance={{
-            theme: dark,
-            variables: {
-              borderRadius: "var(--radius)",
-              colorBackground: "var(--bg-base)",
-              colorPrimary: "var(--accent-primary)",
-            },
-          }}
-        >
-          {children}
-        </ClerkProvider>
+        {children}
       </body>
     </html>
+    </ClerkProvider>
   );
 }

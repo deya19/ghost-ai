@@ -34,7 +34,7 @@ export function ProjectDialogs({ actions }: ProjectDialogsProps) {
     <>
       {/* Create Project Dialog */}
       <Dialog open={dialogOpen === "create"} onOpenChange={(open) => !open && close()}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Create project</DialogTitle>
             <DialogDescription>
@@ -68,7 +68,7 @@ export function ProjectDialogs({ actions }: ProjectDialogsProps) {
 
       {/* Rename Project Dialog */}
       <Dialog open={dialogOpen === "rename"} onOpenChange={(open) => !open && close()}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Rename project</DialogTitle>
             <DialogDescription>
@@ -97,7 +97,7 @@ export function ProjectDialogs({ actions }: ProjectDialogsProps) {
 
       {/* Delete Project Dialog */}
       <Dialog open={dialogOpen === "delete"} onOpenChange={(open) => !open && close()}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Delete project</DialogTitle>
             <DialogDescription>
