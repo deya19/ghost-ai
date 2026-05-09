@@ -2,20 +2,31 @@
 
 import { Button } from "@/components/ui/button"
 import { UserButton } from "@clerk/nextjs"
-import { PanelLeftOpen, PanelLeftClose } from "lucide-react"
+import {
+  Bot,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Share2,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useEditorWorkspaceChrome } from "./editor-shell"
 
 interface EditorNavbarProps {
   isSidebarOpen: boolean
   onSidebarToggle: () => void
+  projectName?: string
   className?: string
 }
 
 export function EditorNavbar({
   isSidebarOpen,
   onSidebarToggle,
+  projectName,
   className,
 }: EditorNavbarProps) {
+  const { isAiSidebarOpen, setIsAiSidebarOpen } = useEditorWorkspaceChrome()
+  const isWorkspace = Boolean(projectName)
+
   return (
     <header
       className={cn(
@@ -39,11 +50,35 @@ export function EditorNavbar({
         </Button>
       </div>
 
-      {/* Center section - Empty for now */}
-      <div className="flex items-center" />
+      <div className="min-w-0 flex-1 px-4 text-center">
+        {projectName ? (
+          <h1 className="truncate text-sm font-medium text-foreground">
+            {projectName}
+          </h1>
+        ) : null}
+      </div>
 
-      {/* Right section - User menu */}
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
+        {isWorkspace && (
+          <>
+            <Button variant="outline" size="sm" type="button">
+              <Share2 className="h-4 w-4" />
+              Share
+            </Button>
+            <Button
+              variant={isAiSidebarOpen ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setIsAiSidebarOpen(!isAiSidebarOpen)}
+              aria-label={
+                isAiSidebarOpen ? "Close AI sidebar" : "Open AI sidebar"
+              }
+              aria-pressed={isAiSidebarOpen}
+              type="button"
+            >
+              <Bot className="h-4 w-4" />
+            </Button>
+          </>
+        )}
         <UserButton />
       </div>
     </header>
