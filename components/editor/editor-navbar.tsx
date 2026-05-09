@@ -9,13 +9,12 @@ import {
   Share2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useEditorWorkspaceChrome } from "./editor-shell"
 
 interface EditorNavbarProps {
   isSidebarOpen: boolean
   onSidebarToggle: () => void
   projectName?: string
-  isAiSidebarOpen?: boolean
-  onAiSidebarToggle?: () => void
   className?: string
 }
 
@@ -23,10 +22,9 @@ export function EditorNavbar({
   isSidebarOpen,
   onSidebarToggle,
   projectName,
-  isAiSidebarOpen = true,
-  onAiSidebarToggle,
   className,
 }: EditorNavbarProps) {
+  const { isAiSidebarOpen, setIsAiSidebarOpen } = useEditorWorkspaceChrome()
   const isWorkspace = Boolean(projectName)
 
   return (
@@ -70,7 +68,7 @@ export function EditorNavbar({
             <Button
               variant={isAiSidebarOpen ? "secondary" : "ghost"}
               size="icon"
-              onClick={onAiSidebarToggle}
+              onClick={() => setIsAiSidebarOpen(!isAiSidebarOpen)}
               aria-label={
                 isAiSidebarOpen ? "Close AI sidebar" : "Open AI sidebar"
               }

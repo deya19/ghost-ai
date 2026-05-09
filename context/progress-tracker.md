@@ -18,9 +18,7 @@ change.
 
 ## Current Goal
 
-
-
-- [Next feature to implement]
+- 10-liveblocks-setup complete: realtime auth endpoint ready for workspace integration
 
 
 
@@ -54,21 +52,15 @@ change.
 
 - 09-share-dialog: Share dialog with collaborator invite/remove, owner/collaborator permissions, Clerk user enrichment via /api/users/lookup
 
-
-
-## In Progress
-
-
-
-- None
+- 10-liveblocks-setup: liveblocks.config.ts with Presence/UserMeta types, cached Liveblocks node client, deterministic cursor color helper, POST /api/liveblocks-auth route with Clerk auth, project access verification, room creation, and user metadata token issuance
+- 11-base-canvas: Collaborative React Flow canvas with LiveblocksProvider, RoomProvider, useLiveblocksFlow, shared canvas types, dot-pattern background, MiniMap, fitView, loose connections, cursors, and error/loading fallbacks
+- 12-shape-panel: Floating pill-shaped shape toolbar with draggable rectangle/diamond/circle/pill/cylinder/hexagon icons, drag-and-drop node creation, custom canvasNode renderer with handles
 
 
 
 ## Next Up
 
-
-
-- [Next feature after share dialog]
+- 13-canvas-persistence: Save/restore canvas state to/from database or blob storage
 
 
 

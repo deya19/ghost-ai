@@ -1,7 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 
-const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in"
-const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up"
+function normalizePath(urlOrPath: string): string {
+  try {
+    const parsed = new URL(urlOrPath)
+    return parsed.pathname.replace(/\/$/, "") || "/"
+  } catch {
+    return urlOrPath.replace(/\/$/, "") || "/"
+  }
+}
+
+const signInUrl = normalizePath(process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in")
+const signUpUrl = normalizePath(process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up")
 
 const isPublicRoute = createRouteMatcher([
   `${signInUrl}(.*)`,

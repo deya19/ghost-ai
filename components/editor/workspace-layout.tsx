@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Menu, X, Bot, Pencil } from "lucide-react"
+import { Menu, X, Bot } from "lucide-react"
 import { Project } from "@/types/project"
 import { Button } from "@/components/ui/button"
 import { UserButton } from "@clerk/nextjs"
@@ -11,6 +11,8 @@ import { ProjectDialogs } from "./project-dialogs"
 import { ShareDialog } from "./share-dialog"
 import { useProjectActions } from "@/hooks/use-project-actions"
 import { EditorDialogsContext } from "@/context/editor-dialogs-context"
+import { useEditorWorkspaceChrome } from "./editor-shell"
+import { Canvas } from "./canvas"
 import { cn } from "@/lib/utils"
 
 interface WorkspaceLayoutProps {
@@ -30,7 +32,7 @@ export function WorkspaceLayout({
 }: WorkspaceLayoutProps) {
   const router = useRouter()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false)
+  const { isAiSidebarOpen, setIsAiSidebarOpen } = useEditorWorkspaceChrome()
   const actions = useProjectActions()
 
   return (
@@ -84,56 +86,26 @@ export function WorkspaceLayout({
         />
 
         {/* Canvas Area */}
-        <main className="relative flex-1 overflow-hidden" style={{ background: "radial-gradient(ellipse at center, #0d1f26 0%, #0a0a0a 50%, #050505 100%)" }}>
-          {/* Gradient glow effect */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="relative">
-              {/* Outer glow */}
-              <div
-                className="absolute inset-0 rounded-full blur-3xl scale-150"
-                style={{ background: "radial-gradient(circle, rgba(6,182,212,0.25) 0%, rgba(20,184,166,0.1) 40%, transparent 70%)" }}
-              />
-              {/* Inner glow */}
-              <div
-                className="absolute inset-0 rounded-full blur-2xl scale-100"
-                style={{ background: "radial-gradient(circle, rgba(34,211,238,0.35) 0%, transparent 60%)" }}
-              />
-              
-            </div>
-          </div>
-          
-          {/* Text content */}
-          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
-            {/* Center icon container */}
-            <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-500/30 bg-linear-to-br from-cyan-500/20 to-teal-500/10">
-              <Pencil className="h-8 w-8 text-cyan-400" />
-            </div>
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Workspace Shell
-            </p>
-            <h2 className="mb-3 text-2xl font-semibold text-foreground">
-              Canvas and collaboration tooling land here next.
-            </h2>
-            <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-              This room is ready for the shared architecture canvas, durable AI workflows, and
-              real-time presence. For now, the shell is wired with project context and
-              navigation only.
-            </p>
-          </div>
+        <main className="relative flex-1 overflow-hidden bg-[#0a0a0a]">
+          <Canvas roomId={currentProjectId} />
         </main>
 
         {/* AI Sidebar */}
         <aside
           className={cn(
-            "w-80 flex-col border-l border-border bg-[#0f0f0f] transition-transform duration-300 ease-in-out",
-            isAiSidebarOpen ? "flex translate-x-0" : "hidden translate-x-full"
+            "absolute right-0 top-0 z-20 h-full flex w-80 flex-col border-l border-border bg-[#0f0f0f] transition-transform duration-300 ease-in-out",
+            isAiSidebarOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
           )}
         >
           {/* Header */}
           <div className="flex h-14 items-center justify-between border-b border-border px-4">
             <h3 className="text-sm font-medium text-foreground">AI Copilot</h3>
             <button
-              onClick={() => setIsAiSidebarOpen(false)}
+              type="button"
+              onClick={() => {
+                console.log("[AI Sidebar] Close clicked, current:", isAiSidebarOpen)
+                setIsAiSidebarOpen(false)
+              }}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Close AI sidebar"
             >

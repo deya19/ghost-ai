@@ -144,10 +144,32 @@ export function ShareDialog({ project, isOwner }: ShareDialogProps) {
     }
   }
 
-  function handleCopyLink() {
-    navigator.clipboard.writeText(projectUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  async function handleCopyLink() {
+    try {
+      await navigator.clipboard.writeText(projectUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error("Clipboard write failed:", err)
+      // Fallback: temporary textarea selection
+      try {
+        const textarea = document.createElement("textarea")
+        textarea.value = projectUrl
+        textarea.style.position = "fixed"
+        textarea.style.left = "-9999px"
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        const success = document.execCommand("copy")
+        document.body.removeChild(textarea)
+        if (success) {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        }
+      } catch (fallbackErr) {
+        console.error("Fallback copy failed:", fallbackErr)
+      }
+    }
   }
 
   return (
@@ -216,10 +238,11 @@ export function ShareDialog({ project, isOwner }: ShareDialogProps) {
                   )}
                 </Button>
               </form>
-              {error && (
-                <p className="text-xs text-destructive mt-2 ml-1">{error}</p>
-              )}
             </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-destructive">{error}</p>
           )}
 
           {/* People with access */}

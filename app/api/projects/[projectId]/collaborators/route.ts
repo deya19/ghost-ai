@@ -1,5 +1,6 @@
 import { auth, clerkClient } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { NextResponse, type NextRequest } from "next/server"
 
 type RouteContext = {
@@ -18,7 +19,6 @@ export async function GET(
   }
 
   const { projectId } = await ctx.params
-  console.log("[API] GET collaborators for projectId:", projectId, "userId:", userId)
 
   // Check if user has access to this project
   const project = await prisma.project.findUnique({
@@ -27,10 +27,10 @@ export async function GET(
   })
 
   if (!project) {
-    console.log("[API] Project not found:", projectId)
+    console.log("[API] Project not found")
     return new NextResponse("Not Found", { status: 404 })
   }
-  console.log("[API] Found project:", project.id, "owner:", project.ownerId)
+  console.log("[API] Project found")
 
   // Get current user's email to check collaborator access
   const client = await clerkClient()
@@ -83,26 +83,37 @@ export async function POST(
     return new NextResponse("Bad Request: email is required", { status: 400 })
   }
 
-  // Check if already a collaborator
-  const existing = await prisma.projectCollaborator.findFirst({
-    where: {
-      projectId,
-      email,
-    },
-  })
-
-  if (existing) {
-    return new NextResponse("Conflict: already a collaborator", { status: 409 })
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    return new NextResponse("Bad Request: invalid email", { status: 400 })
   }
 
-  const collaborator = await prisma.projectCollaborator.create({
-    data: {
-      projectId,
-      email,
-    },
-  })
+  // Prevent inviting the project owner
+  const ownerClient = await clerkClient()
+  const owner = await ownerClient.users.getUser(project.ownerId)
+  const ownerEmail = owner.primaryEmailAddress?.emailAddress?.toLowerCase() ?? ""
+  if (ownerEmail && email === ownerEmail) {
+    return new NextResponse("Conflict: cannot invite the project owner", { status: 409 })
+  }
 
-  return NextResponse.json(collaborator, { status: 201 })
+  try {
+    const collaborator = await prisma.projectCollaborator.create({
+      data: {
+        projectId,
+        email,
+      },
+    })
+
+    return NextResponse.json(collaborator, { status: 201 })
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return new NextResponse("Conflict: already a collaborator", { status: 409 })
+    }
+    throw error
+  }
 }
 
 // DELETE - Remove collaborator (owner only)

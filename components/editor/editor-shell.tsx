@@ -18,11 +18,13 @@ import { Project } from "@/types/project"
 
 interface EditorWorkspaceChromeContextValue {
   isAiSidebarOpen: boolean
+  setIsAiSidebarOpen: (open: boolean) => void
 }
 
 const EditorWorkspaceChromeContext =
   createContext<EditorWorkspaceChromeContextValue>({
     isAiSidebarOpen: true,
+    setIsAiSidebarOpen: () => {},
   })
 
 export function useEditorWorkspaceChrome() {
@@ -58,39 +60,42 @@ export function EditorShell({
 
   const isWorkspace = Boolean(activeProjectId)
 
+  const chromeValue = useMemo(
+    () => ({ isAiSidebarOpen, setIsAiSidebarOpen }),
+    [isAiSidebarOpen]
+  )
+
   return (
-    <div className="relative min-h-screen bg-background">
-      {!isWorkspace && (
-        <EditorNavbar
-          isSidebarOpen={isSidebarOpen}
-          onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          projectName={activeProject?.name}
-          isAiSidebarOpen={isAiSidebarOpen}
-          onAiSidebarToggle={() => setIsAiSidebarOpen((open) => !open)}
-        />
-      )}
+    <EditorWorkspaceChromeContext.Provider value={chromeValue}>
+      <div className="relative min-h-screen bg-background">
+        {!isWorkspace && (
+          <EditorNavbar
+            isSidebarOpen={isSidebarOpen}
+            onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+            projectName={activeProject?.name}
+          />
+        )}
 
-      {!isWorkspace && (
-        <ProjectSidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          ownedProjects={ownedProjects}
-          sharedProjects={sharedProjects}
-          onSelectProject={(project) => {
-            router.push(`/editor/${project.id}`)
-            setIsSidebarOpen(false)
-          }}
-          onCreateProject={actions.openCreate}
-          onRenameProject={actions.openRename}
-          onDeleteProject={actions.openDelete}
-          activeProjectId={activeProjectId}
-        />
-      )}
+        {!isWorkspace && (
+          <ProjectSidebar
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            ownedProjects={ownedProjects}
+            sharedProjects={sharedProjects}
+            onSelectProject={(project) => {
+              router.push(`/editor/${project.id}`)
+              setIsSidebarOpen(false)
+            }}
+            onCreateProject={actions.openCreate}
+            onRenameProject={actions.openRename}
+            onDeleteProject={actions.openDelete}
+            activeProjectId={activeProjectId}
+          />
+        )}
 
-      <ProjectDialogs actions={actions} />
+        <ProjectDialogs actions={actions} />
 
-      <EditorDialogsContext.Provider value={{ openCreate: actions.openCreate }}>
-        <EditorWorkspaceChromeContext.Provider value={{ isAiSidebarOpen }}>
+        <EditorDialogsContext.Provider value={{ openCreate: actions.openCreate }}>
           <main
             className={cn(
               !isWorkspace && "pt-14 transition-[padding]",
@@ -99,8 +104,8 @@ export function EditorShell({
           >
             {children}
           </main>
-        </EditorWorkspaceChromeContext.Provider>
-      </EditorDialogsContext.Provider>
-    </div>
+        </EditorDialogsContext.Provider>
+      </div>
+    </EditorWorkspaceChromeContext.Provider>
   )
 }
