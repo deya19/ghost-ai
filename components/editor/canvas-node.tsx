@@ -8,9 +8,9 @@ export function CanvasNodeComponent({ data }: { data: CanvasNode["data"] }) {
 
   return (
     <div className="flex h-full w-full items-center justify-center rounded-md border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-2">
-      <Handle type="target" position={Position.Top} className="bg-[#00d4aa]!" />
+      <Handle type="target" position={Position.Top} className="!bg-[#00d4aa]" />
       <span className="text-xs text-foreground">{label}</span>
-      <Handle type="source" position={Position.Bottom} className="bg-[#00d4aa]!" />
+      <Handle type="source" position={Position.Bottom} className="!bg-[#00d4aa]" />
     </div>
   )
 }

@@ -23,14 +23,16 @@ export async function POST(request: NextRequest) {
     const { data: users } = await client.users.getUserList({ emailAddress: emails })
 
     const results: Record<string, { displayName?: string; avatarUrl?: string }> = {}
-    for (const user of users) {
-      const primaryEmail = user.emailAddresses.find(
-        (e) => e.emailAddress
-      )?.emailAddress
-      if (!primaryEmail) continue
+
+    for (const requestedEmail of emails) {
+      const lowerRequested = requestedEmail.toLowerCase()
+      const user = users.find(u =>
+        u.emailAddresses.some(e => e.emailAddress?.toLowerCase() === lowerRequested)
+      )
+      if (!user) continue
 
       const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined
-      results[primaryEmail] = {
+      results[requestedEmail] = {
         displayName,
         avatarUrl: user.imageUrl,
       }

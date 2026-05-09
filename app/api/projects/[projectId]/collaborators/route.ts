@@ -32,15 +32,21 @@ export async function GET(
   }
   console.log("[API] Project found")
 
-  // Get current user's email to check collaborator access
+  // Short-circuit: owner has access without Clerk lookup
+  if (project.ownerId === userId) {
+    return NextResponse.json(project.collaborators)
+  }
+
+  // Non-owners: verify via collaborator email match
   const client = await clerkClient()
   const clerkUser = await client.users.getUser(userId)
   const userEmail = clerkUser.primaryEmailAddress?.emailAddress?.toLowerCase() ?? ""
 
-  const hasAccess = project.ownerId === userId ||
-    project.collaborators.some(c => c.email.toLowerCase() === userEmail)
+  const isCollaborator = project.collaborators.some(
+    c => c.email.toLowerCase() === userEmail
+  )
 
-  if (!hasAccess) {
+  if (!isCollaborator) {
     return new NextResponse("Forbidden", { status: 403 })
   }
 

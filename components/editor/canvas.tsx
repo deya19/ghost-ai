@@ -159,6 +159,10 @@ export function Canvas({ roomId }: CanvasProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ room }),
         })
+        if (!response.ok) {
+          const text = await response.text().catch(() => "Unknown error")
+          throw new Error(`Liveblocks auth failed: ${response.status} ${response.statusText} — ${text}`)
+        }
         return await response.json()
       }}
     >
