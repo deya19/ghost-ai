@@ -1,6 +1,6 @@
 "use client"
 
-import { Component, type ReactNode, useEffect } from "react"
+import { Component, type ReactNode, useEffect, useState } from "react"
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -86,6 +86,9 @@ function CanvasInner({
   const undo = useUndo()
   const redo = useRedo()
 
+  const [selectionOn, setSelectionOn] = useState(true)
+  const [panOn, setPanOn] = useState(true)
+
   useKeyboardShortcuts({
     reactFlowInstance,
     onUndo: undo,
@@ -159,6 +162,10 @@ function CanvasInner({
       nodeTypes={{ canvasNode: CanvasNodeComponent }}
       edgeTypes={{ canvasEdge: CanvasEdgeComponent }}
       defaultEdgeOptions={{ type: "canvasEdge" }}
+      deleteKeyCode={["Delete", "Backspace"]}
+      selectionOnDrag={selectionOn}
+      panOnDrag={panOn}
+      panActivationKeyCode="Space"
       fitView
       connectionMode={"loose" as ConnectionMode}
     >
@@ -177,7 +184,18 @@ function CanvasInner({
         maskColor="rgba(10,10,10,0.7)"
       />
       <Cursors />
-      <CanvasControlBar />
+      <CanvasControlBar
+        selectionOn={selectionOn}
+        panOn={panOn}
+        onToggleSelection={() => {
+          setSelectionOn(true)
+          setPanOn(false)
+        }}
+        onTogglePan={() => {
+          setSelectionOn(false)
+          setPanOn(true)
+        }}
+      />
       <ShapePanel />
     </ReactFlow>
   )

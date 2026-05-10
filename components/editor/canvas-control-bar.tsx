@@ -6,6 +6,9 @@ import {
   Maximize,
   Undo2,
   Redo2,
+  Trash2,
+  MousePointer2,
+  Move,
 } from "lucide-react"
 import { useReactFlow } from "@xyflow/react"
 import {
@@ -15,12 +18,32 @@ import {
   useCanRedo,
 } from "@liveblocks/react/suspense"
 
-export function CanvasControlBar() {
-  const { zoomIn, zoomOut, fitView } = useReactFlow()
+interface CanvasControlBarProps {
+  selectionOn: boolean
+  panOn: boolean
+  onToggleSelection: () => void
+  onTogglePan: () => void
+}
+
+export function CanvasControlBar({
+  selectionOn,
+  panOn,
+  onToggleSelection,
+  onTogglePan,
+}: CanvasControlBarProps) {
+  const { zoomIn, zoomOut, fitView, getNodes, getEdges, deleteElements } = useReactFlow()
   const undo = useUndo()
   const redo = useRedo()
   const canUndo = useCanUndo()
   const canRedo = useCanRedo()
+
+  function handleDelete() {
+    const selectedNodes = getNodes().filter((n) => n.selected)
+    const selectedEdges = getEdges().filter((e) => e.selected)
+    if (selectedNodes.length || selectedEdges.length) {
+      deleteElements({ nodes: selectedNodes, edges: selectedEdges })
+    }
+  }
 
   return (
     <div className="nodrag nopan absolute bottom-20 left-4 z-10 flex items-center rounded-full border border-[#2a2a2a] bg-[#141414] px-2 py-1.5 shadow-lg">
@@ -76,6 +99,50 @@ export function CanvasControlBar() {
           <Redo2 className="h-4 w-4" />
         </button>
       </div>
+
+      {/* Divider */}
+      <div className="mx-2 h-4 w-px bg-[#2a2a2a]" />
+
+      {/* Delete */}
+      <button
+        type="button"
+        aria-label="Delete selected"
+        onClick={handleDelete}
+        className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-[#2a2a2a] hover:text-red-400"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+
+      {/* Divider */}
+      <div className="mx-2 h-4 w-px bg-[#2a2a2a]" />
+
+      {/* Select toggle */}
+      <button
+        type="button"
+        aria-label="Select mode"
+        onClick={onToggleSelection}
+        className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+          selectionOn && !panOn
+            ? "bg-[#2a2a2a] text-white"
+            : "text-white/70 hover:bg-[#2a2a2a] hover:text-white"
+        }`}
+      >
+        <MousePointer2 className="h-4 w-4" />
+      </button>
+
+      {/* Pan toggle */}
+      <button
+        type="button"
+        aria-label="Pan mode"
+        onClick={onTogglePan}
+        className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+          panOn && !selectionOn
+            ? "bg-[#2a2a2a] text-white"
+            : "text-white/70 hover:bg-[#2a2a2a] hover:text-white"
+        }`}
+      >
+        <Move className="h-4 w-4" />
+      </button>
     </div>
   )
 }
