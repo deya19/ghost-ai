@@ -14,6 +14,7 @@ function n(
   y: number,
   label: string,
   shape: string,
+  color: string,
   bgColor: string,
   textColor: string,
   w: number,
@@ -23,7 +24,7 @@ function n(
     id,
     type: "canvasNode",
     position: { x, y },
-    data: { label, color: "#00d4aa", shape, bgColor, textColor },
+    data: { label, color, shape, bgColor, textColor },
     style: { width: w, height: h },
   }
 }
@@ -39,13 +40,13 @@ export const CANVAS_TEMPLATES: CanvasTemplate[] = [
     description:
       "API gateway pattern with service decomposition and dedicated data stores.",
     nodes: [
-      n("api-gw",      300,  20, "API Gateway",     "rectangle", "#10233D", "#52A8FF", 160, 70),
-      n("auth-svc",     20, 160, "Auth Service",     "pill",      "#2E1938", "#BF7AF0", 140, 70),
-      n("user-svc",    220, 160, "User Service",     "rectangle", "#0F2E18", "#62C073", 140, 70),
-      n("order-svc",   440, 160, "Order Service",    "rectangle", "#331B00", "#FF990A", 140, 70),
-      n("pay-svc",     660, 160, "Payment Service",  "rectangle", "#3A1726", "#F75F8F", 140, 70),
-      n("user-db",     260, 320, "User DB",          "cylinder",  "#1F1F1F", "#EDEDED", 120, 80),
-      n("order-db",    480, 320, "Order DB",         "cylinder",  "#1F1F1F", "#EDEDED", 120, 80),
+      n("api-gw",      300,  20, "API Gateway",     "rectangle", "#52A8FF", "#10233D", "#52A8FF", 160, 70),
+      n("auth-svc",     20, 160, "Auth Service",     "pill",      "#BF7AF0", "#2E1938", "#BF7AF0", 140, 70),
+      n("user-svc",    220, 160, "User Service",     "rectangle", "#62C073", "#0F2E18", "#62C073", 140, 70),
+      n("order-svc",   440, 160, "Order Service",    "rectangle", "#FF990A", "#331B00", "#FF990A", 140, 70),
+      n("pay-svc",     660, 160, "Payment Service",  "rectangle", "#F75F8F", "#3A1726", "#F75F8F", 140, 70),
+      n("user-db",     260, 320, "User DB",          "cylinder",  "#EDEDED", "#1F1F1F", "#EDEDED", 120, 80),
+      n("order-db",    480, 320, "Order DB",         "cylinder",  "#EDEDED", "#1F1F1F", "#EDEDED", 120, 80),
     ],
     edges: [
       e("e1", "api-gw", "auth-svc"),
@@ -62,11 +63,11 @@ export const CANVAS_TEMPLATES: CanvasTemplate[] = [
     description:
       "Continuous integration and deployment flow from source code to production.",
     nodes: [
-      n("source",  40, 160, "Source Code", "rectangle", "#10233D", "#52A8FF", 130, 70),
-      n("build",  230, 160, "Build",       "rectangle", "#062822", "#0AC7B4", 120, 70),
-      n("test",   420, 120, "Test",        "diamond",   "#0F2E18", "#62C073", 110, 110),
-      n("deploy", 590, 160, "Deploy",      "rectangle", "#331B00", "#FF990A", 120, 70),
-      n("prod",   780, 160, "Production",  "circle",    "#3C1618", "#FF6166", 100, 100),
+      n("source",  40, 160, "Source Code", "rectangle", "#52A8FF", "#10233D", "#52A8FF", 130, 70),
+      n("build",  230, 160, "Build",       "rectangle", "#0AC7B4", "#062822", "#0AC7B4", 120, 70),
+      n("test",   420, 120, "Test",        "diamond",   "#62C073", "#0F2E18", "#62C073", 110, 110),
+      n("deploy", 590, 160, "Deploy",      "rectangle", "#FF990A", "#331B00", "#FF990A", 120, 70),
+      n("prod",   780, 160, "Production",  "circle",    "#FF6166", "#3C1618", "#FF6166", 100, 100),
     ],
     edges: [
       e("e1", "source", "build"),
@@ -81,11 +82,11 @@ export const CANVAS_TEMPLATES: CanvasTemplate[] = [
     description:
       "Producer–consumer pattern with a central message broker and event store.",
     nodes: [
-      n("producer",   40, 200, "Producer",   "rectangle", "#10233D", "#52A8FF", 130, 70),
-      n("broker",    280, 200, "Event Bus",  "pill",      "#2E1938", "#BF7AF0", 150, 70),
-      n("consumer-a",520, 100, "Consumer A", "rectangle", "#0F2E18", "#62C073", 130, 70),
-      n("consumer-b",520, 300, "Consumer B", "rectangle", "#062822", "#0AC7B4", 130, 70),
-      n("store",     300, 360, "Event Store","cylinder",  "#1F1F1F", "#EDEDED", 130, 80),
+      n("producer",   40, 200, "Producer",   "rectangle", "#52A8FF", "#10233D", "#52A8FF", 130, 70),
+      n("broker",    280, 200, "Event Bus",  "pill",      "#BF7AF0", "#2E1938", "#BF7AF0", 150, 70),
+      n("consumer-a",520, 100, "Consumer A", "rectangle", "#62C073", "#0F2E18", "#62C073", 130, 70),
+      n("consumer-b",520, 300, "Consumer B", "rectangle", "#0AC7B4", "#062822", "#0AC7B4", 130, 70),
+      n("store",     300, 360, "Event Store","cylinder",  "#EDEDED", "#1F1F1F", "#EDEDED", 130, 80),
     ],
     edges: [
       e("e1", "producer",   "broker"),

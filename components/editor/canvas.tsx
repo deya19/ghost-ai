@@ -1,6 +1,6 @@
 "use client"
 
-import { Component, type ReactNode, useEffect, useState } from "react"
+import { Component, type ReactNode, useEffect, useRef, useState } from "react"
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -81,13 +81,15 @@ function CanvasInner({
     })
 
   const reactFlowInstance = useReactFlow()
-  const { screenToFlowPosition, addNodes, addEdges, deleteElements, fitView } =
+  const { screenToFlowPosition, addNodes, addEdges, deleteElements, fitView, getNodes, getEdges } =
     reactFlowInstance
   const undo = useUndo()
   const redo = useRedo()
 
   const [selectionOn, setSelectionOn] = useState(true)
-  const [panOn, setPanOn] = useState(true)
+  const [panOn, setPanOn] = useState(false)
+  const pendingFitView = useRef(false)
+  const isLoadingTemplate = useRef(false)
 
   useKeyboardShortcuts({
     reactFlowInstance,
@@ -96,15 +98,22 @@ function CanvasInner({
   })
 
   useEffect(() => {
-    if (!templateToLoad) return
-    deleteElements({ nodes, edges })
-    window.setTimeout(() => {
-      addNodes(templateToLoad.nodes)
-      addEdges(templateToLoad.edges)
-      window.setTimeout(() => fitView({ duration: 300 }), 120)
-    }, 50)
+    if (!templateToLoad || isLoadingTemplate.current) return
+    isLoadingTemplate.current = true
+    deleteElements({ nodes: getNodes(), edges: getEdges() })
+    addNodes(templateToLoad.nodes)
+    addEdges(templateToLoad.edges)
+    pendingFitView.current = true
     onTemplateLoaded()
-  }, [templateToLoad, deleteElements, addNodes, addEdges, fitView, onTemplateLoaded, nodes, edges])
+    isLoadingTemplate.current = false
+  }, [templateToLoad, deleteElements, addNodes, addEdges, fitView, onTemplateLoaded, getNodes, getEdges])
+
+  useEffect(() => {
+    if (pendingFitView.current && nodes.length > 0) {
+      fitView({ duration: 300 })
+      pendingFitView.current = false
+    }
+  }, [nodes, fitView])
 
   function onDragOver(event: React.DragEvent) {
     event.preventDefault()
@@ -163,6 +172,10 @@ function CanvasInner({
       edgeTypes={{ canvasEdge: CanvasEdgeComponent }}
       defaultEdgeOptions={{ type: "canvasEdge" }}
       deleteKeyCode={["Delete", "Backspace"]}
+      /* Interaction model (Option B — Space as override):
+         - Select mode (default): left-drag on empty canvas = selection box
+         - Pan mode (toggle): left-drag = pan canvas
+         - Space key: temporary pan override regardless of current mode */
       selectionOnDrag={selectionOn}
       panOnDrag={panOn}
       panActivationKeyCode="Space"

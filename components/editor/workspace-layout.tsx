@@ -165,7 +165,10 @@ export function WorkspaceLayout({
       <StarterTemplatesModal
         open={isTemplatesOpen}
         onOpenChange={setIsTemplatesOpen}
-        onImport={(t) => setTemplateToLoad(t)}
+        onImport={(t) => {
+          setTemplateToLoad(t)
+          setIsTemplatesOpen(false)
+        }}
       />
 
       <EditorDialogsContext.Provider value={{ openCreate: actions.openCreate }}>

@@ -68,7 +68,14 @@ function TemplatePreview({ template }: { template: CanvasTemplate }) {
         </g>
       )
     }
-    const r = shape === "circle" || shape === "pill" ? Math.min(w, h) / 2 : 4
+    let r: number
+    if (shape === "circle") {
+      r = Math.min(w, h) / 2
+    } else if (shape === "pill") {
+      r = h / 2
+    } else {
+      r = 4
+    }
     return <rect key={nd.id} x={x} y={y} width={w} height={h} rx={r} ry={r} fill={fill} stroke="#3a3a3a" strokeWidth="1" />
   }
 
@@ -97,6 +104,10 @@ export function StarterTemplatesModal({
   onImport,
 }: StarterTemplatesModalProps) {
   function handleImport(template: CanvasTemplate) {
+    const confirmed = window.confirm(
+      "This will replace your current canvas. Continue?"
+    )
+    if (!confirmed) return
     onImport(template)
     onOpenChange(false)
   }
@@ -108,8 +119,8 @@ export function StarterTemplatesModal({
         style={{ maxWidth: 1600, width: "calc(100vw - 1rem)" }}
       >
         <DialogHeader>
-          <DialogTitle className="text-white" style={{paddingLeft: "10px"}}>Import Template</DialogTitle>
-          <DialogDescription  className="text-white/60 pl-1" style={{paddingLeft: "10px"}} >
+          <DialogTitle className="text-white pl-2.5">Import Template</DialogTitle>
+          <DialogDescription className="text-white/60 pl-2.5">
             Choose a starter template to pre-populate your canvas. Any existing nodes will be replaced — use{" "}
             <kbd className="rounded bg-[#2a2a2a] px-1 py-0.5 text-[10px] font-mono text-white/80">
               ⌘Z

@@ -26,7 +26,9 @@ export function CanvasEdgeComponent({
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(label)
+  const [hasConflict, setHasConflict] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const startLabelRef = useRef<string>(label)
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -49,16 +51,28 @@ export function CanvasEdgeComponent({
     }
   }, [isEditing])
 
+  useEffect(() => {
+    if (!isEditing) return
+    if (label !== startLabelRef.current) {
+      setHasConflict(true)
+      setIsEditing(false)
+      setEditValue(label)
+    }
+  }, [label, isEditing])
+
   const startEditing = useCallback(() => {
+    startLabelRef.current = label
+    setHasConflict(false)
     setEditValue(label)
     setIsEditing(true)
   }, [label])
 
   const saveLabel = useCallback(() => {
     setIsEditing(false)
+    if (hasConflict) return
     const trimmed = editValue.trim()
     updateEdgeData(id, { label: trimmed || undefined })
-  }, [editValue, id, updateEdgeData])
+  }, [editValue, id, updateEdgeData, hasConflict])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -105,11 +119,19 @@ export function CanvasEdgeComponent({
       </g>
       <EdgeLabelRenderer>
         <div
-          className="nodrag nopan absolute"
+          className="nodrag nopan absolute cursor-pointer"
           style={{
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
           }}
+          tabIndex={0}
+          role="button"
           onDoubleClick={startEditing}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              startEditing()
+            }
+          }}
         >
           {isEditing ? (
             <input

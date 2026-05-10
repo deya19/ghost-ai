@@ -66,7 +66,7 @@ change.
 
 ## Next Up
 
-- 16-canvas-persistence: Save/restore canvas state to/from database or blob storage
+- 19-canvas-persistence: Save/restore canvas state to/from database or blob storage
 
 
 

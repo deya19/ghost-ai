@@ -116,13 +116,13 @@ export function CanvasControlBar({
       {/* Divider */}
       <div className="mx-2 h-4 w-px bg-[#2a2a2a]" />
 
-      {/* Select toggle */}
+      {/* Select toggle — persistent mode; Space is a temporary pan override */}
       <button
         type="button"
         aria-label="Select mode"
         onClick={onToggleSelection}
         className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
-          selectionOn && !panOn
+          selectionOn
             ? "bg-[#2a2a2a] text-white"
             : "text-white/70 hover:bg-[#2a2a2a] hover:text-white"
         }`}
@@ -130,13 +130,13 @@ export function CanvasControlBar({
         <MousePointer2 className="h-4 w-4" />
       </button>
 
-      {/* Pan toggle */}
+      {/* Pan toggle — persistent mode; Space is a temporary pan override */}
       <button
         type="button"
         aria-label="Pan mode"
         onClick={onTogglePan}
         className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
-          panOn && !selectionOn
+          panOn
             ? "bg-[#2a2a2a] text-white"
             : "text-white/70 hover:bg-[#2a2a2a] hover:text-white"
         }`}

@@ -134,7 +134,8 @@ export function CanvasNodeComponent({
             minHeight={40}
             isVisible={selected}
             lineClassName="border-[#2a2a2a] z-20"
-            handleClassName="h-2 w-2 bg-[#141414] border border-[#00d4aa] rounded-sm z-20"
+            handleClassName="h-2 w-2 bg-[#141414] border rounded-sm z-20"
+            handleStyle={{ borderColor: color }}
           />
           <ColorToolbar
             currentBg={bgColor}
