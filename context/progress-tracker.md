@@ -55,12 +55,18 @@ change.
 - 10-liveblocks-setup: liveblocks.config.ts with Presence/UserMeta types, cached Liveblocks node client, deterministic cursor color helper, POST /api/liveblocks-auth route with Clerk auth, project access verification, room creation, and user metadata token issuance
 - 11-base-canvas: Collaborative React Flow canvas with LiveblocksProvider, RoomProvider, useLiveblocksFlow, shared canvas types, dot-pattern background, MiniMap, fitView, loose connections, cursors, and error/loading fallbacks
 - 12-shape-panel: Floating pill-shaped shape toolbar with draggable rectangle/diamond/circle/pill/cylinder/hexagon icons, drag-and-drop node creation, custom canvasNode renderer with handles
+- 13-node-shape: Proper shape rendering (CSS for rectangle/pill/circle, SVG for diamond/hexagon/cylinder), selected border highlighting, drag ghost preview
+- 14-node-editing: NodeResizer with min 60x40 constraints and subtle dark handles, inline label editing on double-click with textarea overlay, blur/Escape close, nodrag/nopan on textarea, placeholder for empty labels
+- 15-node-color-toolbar: Floating color toolbar above selected nodes with 8 predefined bg/text color pairs, swatch selection updates node background and text color via updateNodeData, active swatch indicator, nodrag/nopan on toolbar
+- 16-edge-behavior: Custom canvas edge renderer with right-angle routing (getSmoothStepPath), arrowhead marker, dimmed/rest brightened on hover/selected, invisible wider hit area, inline label editing via EdgeLabelRenderer at path midpoint, pill badge labels with faint hint when empty, four-side connection handles on nodes (subtle white dots, hover-fade)
+- 17-canvas-ergonomics: Floating pill-shaped control bar at bottom-left with zoom (in/out/fit), undo/redo wired to Liveblocks history, disabled buttons dimmed when no history, thin divider between zoom and history groups, keyboard shortcuts (+/= zoom in, - zoom out, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z/Ctrl+Y redo) via useKeyboardShortcuts hook that ignores shortcuts while typing in editable fields
+- 18-starter-templates: CanvasTemplate type and CANVAS_TEMPLATES array (microservices, CI/CD pipeline, event-driven system), StarterTemplatesModal with 3-column scrollable grid and lightweight SVG previews (bounds-fit, shape-aware, edge lines), two-step flow (select → confirm), import replaces canvas via setNodes/setEdges + fitView, navbar LayoutTemplate button, kept inside existing collaborative canvas state
 
 
 
 ## Next Up
 
-- 13-canvas-persistence: Save/restore canvas state to/from database or blob storage
+- 16-canvas-persistence: Save/restore canvas state to/from database or blob storage
 
 
 

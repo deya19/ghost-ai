@@ -1,6 +1,6 @@
 "use client"
 
-import { Component, type ReactNode } from "react"
+import { Component, type ReactNode, useEffect } from "react"
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -18,7 +18,12 @@ import {
 import "@xyflow/react/dist/style.css"
 import "@liveblocks/react-flow/styles.css"
 import { CanvasNodeComponent } from "./canvas-node"
+import { CanvasEdgeComponent } from "./canvas-edge"
+import { CanvasControlBar } from "./canvas-control-bar"
 import { ShapePanel } from "./shape-panel"
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
+import { useUndo, useRedo } from "@liveblocks/react/suspense"
+import type { CanvasTemplate } from "./starter-templates"
 
 class ErrorBoundary extends Component<
   { fallback: ReactNode; children: ReactNode },
@@ -61,7 +66,13 @@ function ErrorFallback() {
 
 let nodeCounter = 0
 
-function CanvasInner() {
+function CanvasInner({
+  templateToLoad,
+  onTemplateLoaded,
+}: {
+  templateToLoad: CanvasTemplate | null
+  onTemplateLoaded: () => void
+}) {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({
       suspense: true,
@@ -69,7 +80,28 @@ function CanvasInner() {
       edges: { initial: [] },
     })
 
-  const { screenToFlowPosition, addNodes } = useReactFlow()
+  const reactFlowInstance = useReactFlow()
+  const { screenToFlowPosition, addNodes, addEdges, deleteElements, fitView } =
+    reactFlowInstance
+  const undo = useUndo()
+  const redo = useRedo()
+
+  useKeyboardShortcuts({
+    reactFlowInstance,
+    onUndo: undo,
+    onRedo: redo,
+  })
+
+  useEffect(() => {
+    if (!templateToLoad) return
+    deleteElements({ nodes, edges })
+    window.setTimeout(() => {
+      addNodes(templateToLoad.nodes)
+      addEdges(templateToLoad.edges)
+      window.setTimeout(() => fitView({ duration: 300 }), 120)
+    }, 50)
+    onTemplateLoaded()
+  }, [templateToLoad, deleteElements, addNodes, addEdges, fitView, onTemplateLoaded, nodes, edges])
 
   function onDragOver(event: React.DragEvent) {
     event.preventDefault()
@@ -104,6 +136,8 @@ function CanvasInner() {
         label: "",
         color: "#00d4aa",
         shape: payload.shape,
+        bgColor: "#1F1F1F",
+        textColor: "#EDEDED",
       },
       style: {
         width: payload.width,
@@ -123,6 +157,8 @@ function CanvasInner() {
       onDragOver={onDragOver}
       onDrop={onDrop}
       nodeTypes={{ canvasNode: CanvasNodeComponent }}
+      edgeTypes={{ canvasEdge: CanvasEdgeComponent }}
+      defaultEdgeOptions={{ type: "canvasEdge" }}
       fitView
       connectionMode={"loose" as ConnectionMode}
     >
@@ -141,6 +177,7 @@ function CanvasInner() {
         maskColor="rgba(10,10,10,0.7)"
       />
       <Cursors />
+      <CanvasControlBar />
       <ShapePanel />
     </ReactFlow>
   )
@@ -148,9 +185,11 @@ function CanvasInner() {
 
 interface CanvasProps {
   roomId: string
+  templateToLoad: CanvasTemplate | null
+  onTemplateLoaded: () => void
 }
 
-export function Canvas({ roomId }: CanvasProps) {
+export function Canvas({ roomId, templateToLoad, onTemplateLoaded }: CanvasProps) {
   return (
     <LiveblocksProvider
       authEndpoint={async (room) => {
@@ -174,7 +213,10 @@ export function Canvas({ roomId }: CanvasProps) {
         <ErrorBoundary fallback={<ErrorFallback />}>
           <ClientSideSuspense fallback={<Loading />}>
             <ReactFlowProvider>
-              <CanvasInner />
+              <CanvasInner
+                templateToLoad={templateToLoad}
+                onTemplateLoaded={onTemplateLoaded}
+              />
             </ReactFlowProvider>
           </ClientSideSuspense>
         </ErrorBoundary>

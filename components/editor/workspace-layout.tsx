@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Menu, X, Bot } from "lucide-react"
+import { Menu, X, Bot, LayoutTemplate } from "lucide-react"
 import { Project } from "@/types/project"
 import { Button } from "@/components/ui/button"
 import { UserButton } from "@clerk/nextjs"
@@ -13,6 +13,8 @@ import { useProjectActions } from "@/hooks/use-project-actions"
 import { EditorDialogsContext } from "@/context/editor-dialogs-context"
 import { useEditorWorkspaceChrome } from "./editor-shell"
 import { Canvas } from "./canvas"
+import { StarterTemplatesModal } from "./starter-templates-modal"
+import type { CanvasTemplate } from "./starter-templates"
 import { cn } from "@/lib/utils"
 
 interface WorkspaceLayoutProps {
@@ -34,6 +36,8 @@ export function WorkspaceLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const { isAiSidebarOpen, setIsAiSidebarOpen } = useEditorWorkspaceChrome()
   const actions = useProjectActions()
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false)
+  const [templateToLoad, setTemplateToLoad] = useState<CanvasTemplate | null>(null)
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-background">
@@ -51,6 +55,14 @@ export function WorkspaceLayout({
           <h1 className="text-sm font-medium text-foreground">{project.name}</h1>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setIsTemplatesOpen(true)}
+            aria-label="Open starter templates"
+          >
+            <LayoutTemplate className="h-5 w-5" />
+          </Button>
           <ShareDialog project={project} isOwner={isOwner} />
           <Button
             variant="ghost"
@@ -87,7 +99,11 @@ export function WorkspaceLayout({
 
         {/* Canvas Area */}
         <main className="relative flex-1 overflow-hidden bg-[#0a0a0a]">
-          <Canvas roomId={currentProjectId} />
+          <Canvas
+            roomId={currentProjectId}
+            templateToLoad={templateToLoad}
+            onTemplateLoaded={() => setTemplateToLoad(null)}
+          />
         </main>
 
         {/* AI Sidebar */}
@@ -145,6 +161,12 @@ export function WorkspaceLayout({
       </div>
 
       <ProjectDialogs actions={actions} />
+
+      <StarterTemplatesModal
+        open={isTemplatesOpen}
+        onOpenChange={setIsTemplatesOpen}
+        onImport={(t) => setTemplateToLoad(t)}
+      />
 
       <EditorDialogsContext.Provider value={{ openCreate: actions.openCreate }}>
         <div />
