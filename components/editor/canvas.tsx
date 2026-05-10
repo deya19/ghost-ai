@@ -1,6 +1,6 @@
 "use client"
 
-import { Component, type ReactNode } from "react"
+import { Component, type ReactNode, useEffect, useRef, useState } from "react"
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -18,7 +18,12 @@ import {
 import "@xyflow/react/dist/style.css"
 import "@liveblocks/react-flow/styles.css"
 import { CanvasNodeComponent } from "./canvas-node"
+import { CanvasEdgeComponent } from "./canvas-edge"
+import { CanvasControlBar } from "./canvas-control-bar"
 import { ShapePanel } from "./shape-panel"
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
+import { useUndo, useRedo } from "@liveblocks/react/suspense"
+import type { CanvasTemplate } from "./starter-templates"
 
 class ErrorBoundary extends Component<
   { fallback: ReactNode; children: ReactNode },
@@ -61,7 +66,13 @@ function ErrorFallback() {
 
 let nodeCounter = 0
 
-function CanvasInner() {
+function CanvasInner({
+  templateToLoad,
+  onTemplateLoaded,
+}: {
+  templateToLoad: CanvasTemplate | null
+  onTemplateLoaded: () => void
+}) {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({
       suspense: true,
@@ -69,7 +80,40 @@ function CanvasInner() {
       edges: { initial: [] },
     })
 
-  const { screenToFlowPosition, addNodes } = useReactFlow()
+  const reactFlowInstance = useReactFlow()
+  const { screenToFlowPosition, addNodes, addEdges, deleteElements, fitView, getNodes, getEdges } =
+    reactFlowInstance
+  const undo = useUndo()
+  const redo = useRedo()
+
+  const [selectionOn, setSelectionOn] = useState(true)
+  const [panOn, setPanOn] = useState(false)
+  const pendingFitView = useRef(false)
+  const isLoadingTemplate = useRef(false)
+
+  useKeyboardShortcuts({
+    reactFlowInstance,
+    onUndo: undo,
+    onRedo: redo,
+  })
+
+  useEffect(() => {
+    if (!templateToLoad || isLoadingTemplate.current) return
+    isLoadingTemplate.current = true
+    deleteElements({ nodes: getNodes(), edges: getEdges() })
+    addNodes(templateToLoad.nodes)
+    addEdges(templateToLoad.edges)
+    pendingFitView.current = true
+    onTemplateLoaded()
+    isLoadingTemplate.current = false
+  }, [templateToLoad, deleteElements, addNodes, addEdges, fitView, onTemplateLoaded, getNodes, getEdges])
+
+  useEffect(() => {
+    if (pendingFitView.current && nodes.length > 0) {
+      fitView({ duration: 300 })
+      pendingFitView.current = false
+    }
+  }, [nodes, fitView])
 
   function onDragOver(event: React.DragEvent) {
     event.preventDefault()
@@ -104,6 +148,8 @@ function CanvasInner() {
         label: "",
         color: "#00d4aa",
         shape: payload.shape,
+        bgColor: "#1F1F1F",
+        textColor: "#EDEDED",
       },
       style: {
         width: payload.width,
@@ -123,6 +169,16 @@ function CanvasInner() {
       onDragOver={onDragOver}
       onDrop={onDrop}
       nodeTypes={{ canvasNode: CanvasNodeComponent }}
+      edgeTypes={{ canvasEdge: CanvasEdgeComponent }}
+      defaultEdgeOptions={{ type: "canvasEdge" }}
+      deleteKeyCode={["Delete", "Backspace"]}
+      /* Interaction model (Option B — Space as override):
+         - Select mode (default): left-drag on empty canvas = selection box
+         - Pan mode (toggle): left-drag = pan canvas
+         - Space key: temporary pan override regardless of current mode */
+      selectionOnDrag={selectionOn}
+      panOnDrag={panOn}
+      panActivationKeyCode="Space"
       fitView
       connectionMode={"loose" as ConnectionMode}
     >
@@ -141,6 +197,18 @@ function CanvasInner() {
         maskColor="rgba(10,10,10,0.7)"
       />
       <Cursors />
+      <CanvasControlBar
+        selectionOn={selectionOn}
+        panOn={panOn}
+        onToggleSelection={() => {
+          setSelectionOn(true)
+          setPanOn(false)
+        }}
+        onTogglePan={() => {
+          setSelectionOn(false)
+          setPanOn(true)
+        }}
+      />
       <ShapePanel />
     </ReactFlow>
   )
@@ -148,9 +216,11 @@ function CanvasInner() {
 
 interface CanvasProps {
   roomId: string
+  templateToLoad: CanvasTemplate | null
+  onTemplateLoaded: () => void
 }
 
-export function Canvas({ roomId }: CanvasProps) {
+export function Canvas({ roomId, templateToLoad, onTemplateLoaded }: CanvasProps) {
   return (
     <LiveblocksProvider
       authEndpoint={async (room) => {
@@ -174,7 +244,10 @@ export function Canvas({ roomId }: CanvasProps) {
         <ErrorBoundary fallback={<ErrorFallback />}>
           <ClientSideSuspense fallback={<Loading />}>
             <ReactFlowProvider>
-              <CanvasInner />
+              <CanvasInner
+                templateToLoad={templateToLoad}
+                onTemplateLoaded={onTemplateLoaded}
+              />
             </ReactFlowProvider>
           </ClientSideSuspense>
         </ErrorBoundary>
