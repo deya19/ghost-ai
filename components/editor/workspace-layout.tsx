@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Menu, X, Bot, LayoutTemplate } from "lucide-react"
+import { Menu, Bot, LayoutTemplate, Save } from "lucide-react"
+import { AiSidebar } from "./ai-sidebar"
 import { Project } from "@/types/project"
 import { Button } from "@/components/ui/button"
-import { UserButton } from "@clerk/nextjs"
 import { ProjectSidebar } from "./project-sidebar"
 import { ProjectDialogs } from "./project-dialogs"
 import { ShareDialog } from "./share-dialog"
@@ -14,8 +14,9 @@ import { EditorDialogsContext } from "@/context/editor-dialogs-context"
 import { useEditorWorkspaceChrome } from "./editor-shell"
 import { Canvas } from "./canvas"
 import { StarterTemplatesModal } from "./starter-templates-modal"
-import type { CanvasTemplate } from "./starter-templates"
+import { CanvasSaveProvider, useCanvasSaveController } from "./canvas-save-context"
 import { cn } from "@/lib/utils"
+import type { CanvasTemplate } from "./starter-templates"
 
 interface WorkspaceLayoutProps {
   project: Project
@@ -23,6 +24,33 @@ interface WorkspaceLayoutProps {
   ownedProjects: Project[]
   sharedProjects: Project[]
   currentProjectId: string
+}
+
+function SaveButton() {
+  const { status, saveRef } = useCanvasSaveController()
+
+  const label =
+    status === "saving"
+      ? "Saving..."
+      : status === "saved"
+        ? "Saved"
+        : status === "error"
+          ? "Error"
+          : "Save"
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => saveRef.current?.()}
+      disabled={status === "saving"}
+      aria-label="Save canvas"
+      className="h-8 gap-1.5 rounded-full border border-border bg-background/80 px-3 text-xs font-medium hover:bg-accent"
+    >
+      <Save className="h-3.5 w-3.5" />
+      {label}
+    </Button>
+  )
 }
 
 export function WorkspaceLayout({
@@ -40,7 +68,8 @@ export function WorkspaceLayout({
   const [templateToLoad, setTemplateToLoad] = useState<CanvasTemplate | null>(null)
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-background">
+    <CanvasSaveProvider>
+      <div className="relative flex h-screen flex-col overflow-hidden bg-background">
       {/* Top Navbar */}
       <header className="flex h-14 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-4">
@@ -57,22 +86,26 @@ export function WorkspaceLayout({
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="sm"
             onClick={() => setIsTemplatesOpen(true)}
             aria-label="Open starter templates"
+            className="h-8 gap-1.5 rounded-full border border-border bg-background/80 px-3 text-xs font-medium hover:bg-accent"
           >
-            <LayoutTemplate className="h-5 w-5" />
+            <LayoutTemplate className="h-3.5 w-3.5" />
+            Templates
           </Button>
+          <SaveButton />
           <ShareDialog project={project} isOwner={isOwner} />
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="sm"
             onClick={() => setIsAiSidebarOpen(!isAiSidebarOpen)}
             aria-label="Toggle AI sidebar"
+            className="h-8 gap-1.5 rounded-full border border-border bg-background/80 px-3 text-xs font-medium hover:bg-accent"
           >
-            <Bot className="h-5 w-5" />
+            <Bot className="h-3.5 w-3.5" />
+            AI
           </Button>
-          <UserButton />
         </div>
       </header>
 
@@ -107,57 +140,10 @@ export function WorkspaceLayout({
         </main>
 
         {/* AI Sidebar */}
-        <aside
-          className={cn(
-            "absolute right-0 top-0 z-20 h-full flex w-80 flex-col border-l border-border bg-[#0f0f0f] transition-transform duration-300 ease-in-out",
-            isAiSidebarOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
-          )}
-        >
-          {/* Header */}
-          <div className="flex h-14 items-center justify-between border-b border-border px-4">
-            <h3 className="text-sm font-medium text-foreground">AI Copilot</h3>
-            <button
-              type="button"
-              onClick={() => {
-                console.log("[AI Sidebar] Close clicked, current:", isAiSidebarOpen)
-                setIsAiSidebarOpen(false)
-              }}
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Close AI sidebar"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          
-          <div className="flex flex-1 flex-col gap-4 p-4">
-            <p className="text-xs text-muted-foreground">Placeholder panel</p>
-            
-            {/* Chat surface pending card */}
-            <div className="rounded-xl border border-border bg-[#141414] p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/10">
-                  <Bot className="h-4 w-4 text-violet-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-foreground">Chat surface pending</h4>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    The toggle is wired. Messaging and generation are intentionally out of scope here.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Future hooks section */}
-            <div className="mt-auto rounded-xl border border-border bg-[#141414] p-4">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Future Hooks
-              </p>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                Prompt composer, run status, and architecture guidance will attach to this sidebar.
-              </p>
-            </div>
-          </div>
-        </aside>
+        <AiSidebar
+          isOpen={isAiSidebarOpen}
+          onClose={() => setIsAiSidebarOpen(false)}
+        />
       </div>
 
       <ProjectDialogs actions={actions} />
@@ -175,5 +161,6 @@ export function WorkspaceLayout({
         <div />
       </EditorDialogsContext.Provider>
     </div>
+    </CanvasSaveProvider>
   )
 }

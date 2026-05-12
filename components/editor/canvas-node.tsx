@@ -179,24 +179,40 @@ export function CanvasNodeComponent({
         )}
       </div>
       <Handle
-        type="target"
+        id="top"
+        type="source"
         position={Position.Top}
-        className="h-2! w-2! rounded-full! border! border-[#2a2a2a]! bg-white! opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        isConnectable={true}
+        isConnectableStart={true}
+        isConnectableEnd={true}
+        className="h-3! w-3! rounded-full! border! border-[#2a2a2a]! bg-white! opacity-40 transition-opacity duration-200 hover:opacity-100"
       />
       <Handle
+        id="right"
         type="source"
         position={Position.Right}
-        className="h-2! w-2! rounded-full! border! border-[#2a2a2a]! bg-white! opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        isConnectable={true}
+        isConnectableStart={true}
+        isConnectableEnd={true}
+        className="h-3! w-3! rounded-full! border! border-[#2a2a2a]! bg-white! opacity-40 transition-opacity duration-200 hover:opacity-100"
       />
       <Handle
+        id="bottom"
         type="source"
         position={Position.Bottom}
-        className="h-2! w-2! rounded-full! border! border-[#2a2a2a]! bg-white! opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        isConnectable={true}
+        isConnectableStart={true}
+        isConnectableEnd={true}
+        className="h-3! w-3! rounded-full! border! border-[#2a2a2a]! bg-white! opacity-40 transition-opacity duration-200 hover:opacity-100"
       />
       <Handle
-        type="target"
+        id="left"
+        type="source"
         position={Position.Left}
-        className="h-2! w-2! rounded-full! border! border-[#2a2a2a]! bg-white! opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        isConnectable={true}
+        isConnectableStart={true}
+        isConnectableEnd={true}
+        className="h-3! w-3! rounded-full! border! border-[#2a2a2a]! bg-white! opacity-40 transition-opacity duration-200 hover:opacity-100"
       />
     </div>
   )

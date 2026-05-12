@@ -36,9 +36,8 @@ Add a small starter template library so users can start a canvas from a pre-buil
 
 4. Wire starter templates into the editor.
    - add a navbar button to open the starter templates modal
-   - when a template is selected, clear all existing nodes and edges first in the canvas
-   - add the selected template nodes and edges after the canvas is cleared
-   - make sure the starter template replaces the current canvas instead of being added on top of existing work
+   - when a template is selected, add the template nodes and edges on top of the existing canvas
+   - make sure the starter template adds to the current canvas instead of replacing existing work
    - fit the view after the template is loaded
    - keep this inside the existing collaborative canvas state
 

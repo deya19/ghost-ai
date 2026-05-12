@@ -176,8 +176,13 @@ export function ShareDialog({ project, isOwner }: ShareDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="ghost" size="icon-sm">
-            <Share className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 rounded-full border border-border bg-background/80 px-3 text-xs font-medium hover:bg-accent"
+          >
+            <Share className="h-3.5 w-3.5" />
+            Share
           </Button>
         }
       />

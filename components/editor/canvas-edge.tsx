@@ -76,6 +76,7 @@ export function CanvasEdgeComponent({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
+      e.stopPropagation()
       if (e.key === "Enter") {
         saveLabel()
       } else if (e.key === "Escape") {
@@ -91,6 +92,7 @@ export function CanvasEdgeComponent({
       <g
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onDoubleClick={startEditing}
       >
         <defs>
           <marker
@@ -116,6 +118,28 @@ export function CanvasEdgeComponent({
           }}
           interactionWidth={20}
         />
+        {isActive && (
+          <>
+            <circle
+              cx={sourceX}
+              cy={sourceY}
+              r={5}
+              fill="#ffffff"
+              stroke="#2a2a2a"
+              strokeWidth={1.5}
+              style={{ pointerEvents: "none" }}
+            />
+            <circle
+              cx={targetX}
+              cy={targetY}
+              r={5}
+              fill="#ffffff"
+              stroke="#2a2a2a"
+              strokeWidth={1.5}
+              style={{ pointerEvents: "none" }}
+            />
+          </>
+        )}
       </g>
       <EdgeLabelRenderer>
         <div
@@ -150,6 +174,10 @@ export function CanvasEdgeComponent({
           ) : label ? (
             <span className="rounded-full bg-[#2a2a2a] px-2 py-0.5 text-xs text-white">
               {label}
+            </span>
+          ) : isActive ? (
+            <span className="rounded-full bg-[#2a2a2a] px-2 py-0.5 text-xs text-[#888888]">
+              double-click to label
             </span>
           ) : null}
         </div>
