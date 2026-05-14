@@ -2,6 +2,7 @@
 
 import { useStore } from "@xyflow/react"
 import { useOthers } from "@liveblocks/react/suspense"
+import { Loader2 } from "lucide-react"
 
 export function LiveCursors() {
   const transform = useStore((state) => ({
@@ -19,6 +20,7 @@ export function LiveCursors() {
 
         const screenX = cursor.x * transform.zoom + transform.x
         const screenY = cursor.y * transform.zoom + transform.y
+        const isThinking = other.presence.thinking === true
 
         return (
           <div
@@ -48,12 +50,15 @@ export function LiveCursors() {
             </svg>
             {/* Name badge */}
             <div
-              className="ml-3 -mt-2 whitespace-nowrap rounded-full px-1.5 py-[2px] text-[10px] font-medium text-white shadow-sm"
+              className="ml-3 -mt-2 flex items-center gap-1 whitespace-nowrap rounded-full px-1.5 py-[2px] text-[10px] font-medium text-white shadow-sm"
               style={{
                 backgroundColor: other.info.color,
                 boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
               }}
             >
+              {isThinking && (
+                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+              )}
               {other.info.name}
             </div>
           </div>

@@ -1,0 +1,44 @@
+{
+  "configPath": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-8Shvqk\\Desktop\\ghost-ai\\trigger.config.mjs",
+  "customConditions": [
+  ],
+  "prompts": [
+  ],
+  "queues": [
+  ],
+  "runtime": "node",
+  "runtimeVersion": "22.18.0",
+  "tasks": [
+    {
+      "entryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-8Shvqk\\Desktop\\ghost-ai\\trigger\\design-agent.mjs",
+      "filePath": "trigger/design-agent.ts",
+      "id": "design-agent",
+      "maxDuration": 3600,
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 2,
+        "maxTimeoutInMs": 60000,
+        "minTimeoutInMs": 1000,
+        "randomize": true
+      }
+    },
+    {
+      "entryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-8Shvqk\\Desktop\\ghost-ai\\trigger\\generate-spec.mjs",
+      "filePath": "trigger/generate-spec.ts",
+      "id": "generate-spec",
+      "maxDuration": 3600,
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 2,
+        "maxTimeoutInMs": 60000,
+        "minTimeoutInMs": 1000,
+        "randomize": true
+      }
+    }
+  ],
+  "timings": {
+    "trigger/design-agent.ts": 283.34760000000006,
+    "trigger/generate-spec.ts": 505.5635000000002
+  },
+  "workerEntryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-8Shvqk\\AppData\\Local\\npm-cache\\_npx\\f51a09bd0abf5f10\\node_modules\\trigger.dev\\dist\\esm\\entryPoints\\dev-run-worker.mjs"
+}

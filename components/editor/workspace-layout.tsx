@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Menu, Bot, LayoutTemplate, Save } from "lucide-react"
-import { AiSidebar } from "./ai-sidebar"
 import { Project } from "@/types/project"
 import { Button } from "@/components/ui/button"
 import { ProjectSidebar } from "./project-sidebar"
@@ -136,14 +135,10 @@ export function WorkspaceLayout({
             roomId={currentProjectId}
             templateToLoad={templateToLoad}
             onTemplateLoaded={() => setTemplateToLoad(null)}
+            aiSidebarOpen={isAiSidebarOpen}
+            onAiSidebarClose={() => setIsAiSidebarOpen(false)}
           />
         </main>
-
-        {/* AI Sidebar */}
-        <AiSidebar
-          isOpen={isAiSidebarOpen}
-          onClose={() => setIsAiSidebarOpen(false)}
-        />
       </div>
 
       <ProjectDialogs actions={actions} />

@@ -1,6 +1,13 @@
 "use client"
 
-import { Component, type ReactNode, useEffect, useRef, useState } from "react"
+import {
+  Component,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -17,6 +24,8 @@ import {
   ClientSideSuspense,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense"
+import { useMutation } from "@liveblocks/react"
+import { LiveObject, type LsonObject } from "@liveblocks/core"
 import "@xyflow/react/dist/style.css"
 import "@liveblocks/react-flow/styles.css"
 import { CanvasNodeComponent } from "./canvas-node"
@@ -30,6 +39,7 @@ import { useUndo, useRedo } from "@liveblocks/react/suspense"
 import type { CanvasTemplate } from "./starter-templates"
 import { PresenceAvatars } from "./presence-avatars"
 import { LiveCursors } from "./live-cursors"
+import { AiSidebar } from "./ai-sidebar"
 
 class ErrorBoundary extends Component<
   { fallback: ReactNode; children: ReactNode },
@@ -76,10 +86,14 @@ function CanvasInner({
   roomId,
   templateToLoad,
   onTemplateLoaded,
+  aiSidebarOpen,
+  onAiSidebarClose,
 }: {
   roomId: string
   templateToLoad: CanvasTemplate | null
   onTemplateLoaded: () => void
+  aiSidebarOpen: boolean
+  onAiSidebarClose: () => void
 }) {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({
@@ -87,6 +101,130 @@ function CanvasInner({
       nodes: { initial: [] },
       edges: { initial: [] },
     })
+
+  // Clean up corrupted nodes/edges stored as LiveRegister by old design agent
+  type LiveObjectLike = {
+    get: (key: string) => unknown | undefined
+  }
+
+  type LiveMapLike = {
+    get: (id: string) => unknown | undefined
+    set: (id: string, value: unknown) => void
+    delete: (id: string) => boolean
+    [Symbol.iterator](): Iterator<[string, unknown]>
+  }
+
+  const fixStorage = useMutation(
+    ({ storage }) => {
+      const flow = storage.get("flow") as LiveObjectLike | undefined
+      if (!flow) return
+
+      const nodesMap = flow.get("nodes") as LiveMapLike | undefined
+      if (nodesMap) {
+        const corruptedIds: string[] = []
+        for (const [id, node] of nodesMap) {
+          if (
+            node &&
+            typeof (node as { setLocal?: () => void }).setLocal !== "function"
+          ) {
+            corruptedIds.push(id)
+          }
+        }
+        for (const id of corruptedIds) {
+          const node = nodesMap.get(id) as Record<string, unknown>
+          const {
+            selected: _sel,
+            dragging: _drag,
+            measured: _meas,
+            resizing: _resize,
+            width,
+            height,
+            ...rest
+          } = node
+          nodesMap.set(
+            id,
+            new LiveObject({
+              ...(rest as LsonObject),
+              style: new LiveObject({
+                width: (width as number) ?? 160,
+                height: (height as number) ?? 70,
+              }),
+            })
+          )
+        }
+      }
+
+      const edgesMap = flow.get("edges") as LiveMapLike | undefined
+      if (edgesMap) {
+        const corruptedIds: string[] = []
+        for (const [id, edge] of edgesMap) {
+          if (
+            edge &&
+            typeof (edge as { setLocal?: () => void }).setLocal !== "function"
+          ) {
+            corruptedIds.push(id)
+          }
+        }
+        for (const id of corruptedIds) {
+          const edge = edgesMap.get(id) as Record<string, unknown>
+          const { selected: _sel, ...rest } = edge
+          edgesMap.set(
+            id,
+            new LiveObject({
+              ...(rest as LsonObject),
+              data: new LiveObject(
+                (rest.data as LsonObject) ?? { label: "" }
+              ),
+            })
+          )
+        }
+      }
+    },
+    []
+  )
+
+  const hasFixedRef = useRef(false)
+  useEffect(() => {
+    if (hasFixedRef.current) return
+    hasFixedRef.current = true
+    fixStorage()
+  }, [fixStorage])
+
+  const safeOnNodesChange = useCallback(
+    (changes: Parameters<typeof onNodesChange>[0]) => {
+      try {
+        onNodesChange(changes)
+      } catch (err) {
+        if (
+          err instanceof TypeError &&
+          err.message.includes("setLocal is not a function")
+        ) {
+          console.warn("[Canvas] Ignoring setLocal error from corrupted node")
+          return
+        }
+        throw err
+      }
+    },
+    [onNodesChange]
+  )
+
+  const safeOnEdgesChange = useCallback(
+    (changes: Parameters<typeof onEdgesChange>[0]) => {
+      try {
+        onEdgesChange(changes)
+      } catch (err) {
+        if (
+          err instanceof TypeError &&
+          err.message.includes("setLocal is not a function")
+        ) {
+          console.warn("[Canvas] Ignoring setLocal error from corrupted edge")
+          return
+        }
+        throw err
+      }
+    },
+    [onEdgesChange]
+  )
 
   const { status: saveStatus, save } = useCanvasAutosave({
     projectId: roomId,
@@ -144,8 +282,18 @@ function CanvasInner({
         }
         const data = await res.json()
         if (data.nodes?.length || data.edges?.length) {
-          addNodes(data.nodes)
-          addEdges(data.edges)
+          addNodes(
+            data.nodes.map((node: Record<string, unknown>) => {
+              const { selected, dragging, resizing, measured, positionAbsolute, computed, ...clean } = node
+              return clean
+            })
+          )
+          addEdges(
+            data.edges.map((edge: Record<string, unknown>) => {
+              const { selected, animated, interactionWidth, ...clean } = edge
+              return clean
+            })
+          )
           pendingFitView.current = true
         }
       } catch (err) {
@@ -234,8 +382,8 @@ function CanvasInner({
       className="h-full"
       nodes={nodes}
       edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
+      onNodesChange={safeOnNodesChange}
+      onEdgesChange={safeOnEdgesChange}
       onConnect={onConnect}
       onDelete={onDelete}
       onDragOver={onDragOver}
@@ -319,6 +467,13 @@ function CanvasInner({
       <Panel position="bottom-center">
         <ShapePanel />
       </Panel>
+      <AiSidebar
+        isOpen={aiSidebarOpen}
+        onClose={onAiSidebarClose}
+        roomId={roomId}
+        nodes={nodes}
+        edges={edges}
+      />
     </ReactFlow>
   )
 }
@@ -327,9 +482,17 @@ interface CanvasProps {
   roomId: string
   templateToLoad: CanvasTemplate | null
   onTemplateLoaded: () => void
+  aiSidebarOpen: boolean
+  onAiSidebarClose: () => void
 }
 
-export function Canvas({ roomId, templateToLoad, onTemplateLoaded }: CanvasProps) {
+export function Canvas({
+  roomId,
+  templateToLoad,
+  onTemplateLoaded,
+  aiSidebarOpen,
+  onAiSidebarClose,
+}: CanvasProps) {
   return (
     <LiveblocksProvider
       authEndpoint={async (room) => {
@@ -348,7 +511,6 @@ export function Canvas({ roomId, templateToLoad, onTemplateLoaded }: CanvasProps
       <RoomProvider
         id={roomId}
         initialPresence={{ cursor: null, thinking: false }}
-        initialStorage={{ nodes: [] }}
       >
         <ErrorBoundary fallback={<ErrorFallback />}>
           <ClientSideSuspense fallback={<Loading />}>
@@ -357,6 +519,8 @@ export function Canvas({ roomId, templateToLoad, onTemplateLoaded }: CanvasProps
                 roomId={roomId}
                 templateToLoad={templateToLoad}
                 onTemplateLoaded={onTemplateLoaded}
+                aiSidebarOpen={aiSidebarOpen}
+                onAiSidebarClose={onAiSidebarClose}
               />
             </ReactFlowProvider>
           </ClientSideSuspense>

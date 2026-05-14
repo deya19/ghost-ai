@@ -39,6 +39,13 @@ export async function POST(request: Request) {
     })
   }
 
+  // Ensure ai-chat feed exists
+  try {
+    await client.getFeed({ roomId, feedId: "ai-chat" })
+  } catch {
+    await client.createFeed({ roomId, feedId: "ai-chat" })
+  }
+
   // Fetch user info from Clerk
   const user = await currentUser()
   const displayName =
