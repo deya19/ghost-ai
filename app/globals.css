@@ -140,3 +140,10 @@
     @apply font-sans;
     }
 }
+
+/* Hide Liveblocks watermark */
+.lb-watermark,
+[data-liveblocks-watermark],
+[class*="liveblocks-watermark"] {
+  display: none !important;
+}

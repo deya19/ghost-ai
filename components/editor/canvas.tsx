@@ -1,20 +1,31 @@
 "use client"
 
-import { Component, type ReactNode, useEffect, useRef, useState } from "react"
+import {
+  Component,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 import {
   ReactFlow,
   ReactFlowProvider,
   Background,
   MiniMap,
+  Panel,
   useReactFlow,
   type ConnectionMode,
 } from "@xyflow/react"
-import { useLiveblocksFlow, Cursors } from "@liveblocks/react-flow"
+import { useLiveblocksFlow } from "@liveblocks/react-flow"
 import {
   LiveblocksProvider,
   RoomProvider,
   ClientSideSuspense,
+  useUpdateMyPresence,
 } from "@liveblocks/react/suspense"
+import { useMutation } from "@liveblocks/react"
+import { LiveObject, type LsonObject } from "@liveblocks/core"
 import "@xyflow/react/dist/style.css"
 import "@liveblocks/react-flow/styles.css"
 import { CanvasNodeComponent } from "./canvas-node"
@@ -22,8 +33,13 @@ import { CanvasEdgeComponent } from "./canvas-edge"
 import { CanvasControlBar } from "./canvas-control-bar"
 import { ShapePanel } from "./shape-panel"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
+import { useCanvasAutosave } from "@/hooks/use-canvas-autosave"
+import { useCanvasSaveController } from "./canvas-save-context"
 import { useUndo, useRedo } from "@liveblocks/react/suspense"
 import type { CanvasTemplate } from "./starter-templates"
+import { PresenceAvatars } from "./presence-avatars"
+import { LiveCursors } from "./live-cursors"
+import { AiSidebar } from "./ai-sidebar"
 
 class ErrorBoundary extends Component<
   { fallback: ReactNode; children: ReactNode },
@@ -67,11 +83,17 @@ function ErrorFallback() {
 let nodeCounter = 0
 
 function CanvasInner({
+  roomId,
   templateToLoad,
   onTemplateLoaded,
+  aiSidebarOpen,
+  onAiSidebarClose,
 }: {
+  roomId: string
   templateToLoad: CanvasTemplate | null
   onTemplateLoaded: () => void
+  aiSidebarOpen: boolean
+  onAiSidebarClose: () => void
 }) {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({
@@ -80,8 +102,149 @@ function CanvasInner({
       edges: { initial: [] },
     })
 
+  // Clean up corrupted nodes/edges stored as LiveRegister by old design agent
+  type LiveObjectLike = {
+    get: (key: string) => unknown | undefined
+  }
+
+  type LiveMapLike = {
+    get: (id: string) => unknown | undefined
+    set: (id: string, value: unknown) => void
+    delete: (id: string) => boolean
+    [Symbol.iterator](): Iterator<[string, unknown]>
+  }
+
+  const fixStorage = useMutation(
+    ({ storage }) => {
+      const flow = storage.get("flow") as LiveObjectLike | undefined
+      if (!flow) return
+
+      const nodesMap = flow.get("nodes") as LiveMapLike | undefined
+      if (nodesMap) {
+        const corruptedIds: string[] = []
+        for (const [id, node] of nodesMap) {
+          if (
+            node &&
+            typeof (node as { setLocal?: () => void }).setLocal !== "function"
+          ) {
+            corruptedIds.push(id)
+          }
+        }
+        for (const id of corruptedIds) {
+          const node = nodesMap.get(id) as Record<string, unknown>
+          const {
+            selected: _sel,
+            dragging: _drag,
+            measured: _meas,
+            resizing: _resize,
+            width,
+            height,
+            ...rest
+          } = node
+          nodesMap.set(
+            id,
+            new LiveObject({
+              ...(rest as LsonObject),
+              style: new LiveObject({
+                width: (width as number) ?? 160,
+                height: (height as number) ?? 70,
+              }),
+            })
+          )
+        }
+      }
+
+      const edgesMap = flow.get("edges") as LiveMapLike | undefined
+      if (edgesMap) {
+        const corruptedIds: string[] = []
+        for (const [id, edge] of edgesMap) {
+          if (
+            edge &&
+            typeof (edge as { setLocal?: () => void }).setLocal !== "function"
+          ) {
+            corruptedIds.push(id)
+          }
+        }
+        for (const id of corruptedIds) {
+          const edge = edgesMap.get(id) as Record<string, unknown>
+          const { selected: _sel, ...rest } = edge
+          edgesMap.set(
+            id,
+            new LiveObject({
+              ...(rest as LsonObject),
+              data: new LiveObject(
+                (rest.data as LsonObject) ?? { label: "" }
+              ),
+            })
+          )
+        }
+      }
+    },
+    []
+  )
+
+  const hasFixedRef = useRef(false)
+  useEffect(() => {
+    if (hasFixedRef.current) return
+    hasFixedRef.current = true
+    fixStorage()
+  }, [fixStorage])
+
+  const safeOnNodesChange = useCallback(
+    (changes: Parameters<typeof onNodesChange>[0]) => {
+      try {
+        onNodesChange(changes)
+      } catch (err) {
+        if (
+          err instanceof TypeError &&
+          err.message.includes("setLocal is not a function")
+        ) {
+          console.warn("[Canvas] Ignoring setLocal error from corrupted node")
+          return
+        }
+        throw err
+      }
+    },
+    [onNodesChange]
+  )
+
+  const safeOnEdgesChange = useCallback(
+    (changes: Parameters<typeof onEdgesChange>[0]) => {
+      try {
+        onEdgesChange(changes)
+      } catch (err) {
+        if (
+          err instanceof TypeError &&
+          err.message.includes("setLocal is not a function")
+        ) {
+          console.warn("[Canvas] Ignoring setLocal error from corrupted edge")
+          return
+        }
+        throw err
+      }
+    },
+    [onEdgesChange]
+  )
+
+  const { status: saveStatus, save } = useCanvasAutosave({
+    projectId: roomId,
+    nodes,
+    edges,
+    debounceMs: 3000,
+  })
+
+  const { setStatus, saveRef } = useCanvasSaveController()
+
+  useEffect(() => {
+    saveRef.current = save
+  }, [save, saveRef])
+
+  useEffect(() => {
+    setStatus(saveStatus)
+  }, [saveStatus, setStatus])
+
   const reactFlowInstance = useReactFlow()
-  const { screenToFlowPosition, addNodes, addEdges, deleteElements, fitView, getNodes, getEdges } =
+  const { screenToFlowPosition, addNodes, addEdges, fitView } =
     reactFlowInstance
   const undo = useUndo()
   const redo = useRedo()
@@ -90,6 +253,7 @@ function CanvasInner({
   const [panOn, setPanOn] = useState(false)
   const pendingFitView = useRef(false)
   const isLoadingTemplate = useRef(false)
+  const updateMyPresence = useUpdateMyPresence()
 
   useKeyboardShortcuts({
     reactFlowInstance,
@@ -97,16 +261,65 @@ function CanvasInner({
     onRedo: redo,
   })
 
+  // Load saved canvas state on mount if room is empty
+  const hasLoadedRef = useRef(false)
+  useEffect(() => {
+    if (hasLoadedRef.current) return
+    if (nodes.length > 0 || edges.length > 0) {
+      hasLoadedRef.current = true
+      return
+    }
+
+    async function loadSavedCanvas() {
+      try {
+        const res = await fetch(`/api/projects/${roomId}/canvas`)
+        if (!res.ok) {
+          if (res.status === 404) {
+            hasLoadedRef.current = true
+            return
+          }
+          throw new Error(`Load failed: ${res.status}`)
+        }
+        const data = await res.json()
+        if (data.nodes?.length || data.edges?.length) {
+          addNodes(
+            data.nodes.map((node: Record<string, unknown>) => {
+              const { selected, dragging, resizing, measured, positionAbsolute, computed, ...clean } = node
+              return clean
+            })
+          )
+          addEdges(
+            data.edges.map((edge: Record<string, unknown>) => {
+              const { selected, animated, interactionWidth, ...clean } = edge
+              return clean
+            })
+          )
+          pendingFitView.current = true
+        }
+      } catch (err) {
+        console.error("[Canvas Load] Failed:", err)
+      } finally {
+        hasLoadedRef.current = true
+      }
+    }
+
+    loadSavedCanvas()
+  }, [roomId, nodes.length, edges.length, addNodes, addEdges])
+
   useEffect(() => {
     if (!templateToLoad || isLoadingTemplate.current) return
     isLoadingTemplate.current = true
-    deleteElements({ nodes: getNodes(), edges: getEdges() })
     addNodes(templateToLoad.nodes)
-    addEdges(templateToLoad.edges)
+    addEdges(
+      templateToLoad.edges.map((edge) => ({
+        ...edge,
+        id: `${templateToLoad.id}-${edge.id}`,
+      }))
+    )
     pendingFitView.current = true
     onTemplateLoaded()
     isLoadingTemplate.current = false
-  }, [templateToLoad, deleteElements, addNodes, addEdges, fitView, onTemplateLoaded, getNodes, getEdges])
+  }, [templateToLoad, addNodes, addEdges, fitView, onTemplateLoaded])
 
   useEffect(() => {
     if (pendingFitView.current && nodes.length > 0) {
@@ -133,10 +346,16 @@ function CanvasInner({
       return
     }
 
-    const position = screenToFlowPosition({
+    const flowPos = screenToFlowPosition({
       x: event.clientX,
       y: event.clientY,
     })
+
+    // Center the node on the cursor
+    const position = {
+      x: flowPos.x - payload.width / 2,
+      y: flowPos.y - payload.height / 2,
+    }
 
     const id = `${payload.shape}-${Date.now()}-${nodeCounter++}`
 
@@ -160,14 +379,25 @@ function CanvasInner({
 
   return (
     <ReactFlow
+      className="h-full"
       nodes={nodes}
       edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
+      onNodesChange={safeOnNodesChange}
+      onEdgesChange={safeOnEdgesChange}
       onConnect={onConnect}
       onDelete={onDelete}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      onMouseMove={(event) => {
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        })
+        updateMyPresence({ cursor: { x: position.x, y: position.y } })
+      }}
+      onMouseLeave={() => {
+        updateMyPresence({ cursor: null })
+      }}
       nodeTypes={{ canvasNode: CanvasNodeComponent }}
       edgeTypes={{ canvasEdge: CanvasEdgeComponent }}
       defaultEdgeOptions={{ type: "canvasEdge" }}
@@ -179,37 +409,71 @@ function CanvasInner({
       selectionOnDrag={selectionOn}
       panOnDrag={panOn}
       panActivationKeyCode="Space"
-      fitView
       connectionMode={"loose" as ConnectionMode}
+      isValidConnection={() => true}
     >
       <Background gap={16} size={1} color="#2a2a2a" />
-      <MiniMap
-        style={{
-          position: "absolute",
-          bottom: 16,
-          right: 16,
-          borderRadius: 8,
-          overflow: "hidden",
-          border: "1px solid rgba(42,42,42,0.5)",
-        }}
-        bgColor="#141414"
-        nodeColor="#00d4aa"
-        maskColor="rgba(10,10,10,0.7)"
+      <div className="hidden md:block">
+        <MiniMap
+          style={{
+            position: "absolute",
+            bottom: 16,
+            right: 16,
+            borderRadius: 8,
+            overflow: "hidden",
+            border: "1px solid rgba(42,42,42,0.5)",
+          }}
+          bgColor="#141414"
+          nodeColor="#00d4aa"
+          maskColor="rgba(10,10,10,0.7)"
+        />
+      </div>
+      <LiveCursors />
+      <Panel position="top-right" className="hidden md:block">
+        <PresenceAvatars />
+      </Panel>
+      {/* Phone: centered top */}
+      <Panel position="top-center" className="md:hidden">
+        <CanvasControlBar
+          selectionOn={selectionOn}
+          panOn={panOn}
+          onToggleSelection={() => {
+            setSelectionOn(true)
+            setPanOn(false)
+          }}
+          onTogglePan={() => {
+            setSelectionOn(false)
+            setPanOn(true)
+          }}
+          saveStatus={saveStatus}
+        />
+      </Panel>
+      {/* Desktop: top-left */}
+      <Panel position="top-left" className="hidden md:block">
+        <CanvasControlBar
+          selectionOn={selectionOn}
+          panOn={panOn}
+          onToggleSelection={() => {
+            setSelectionOn(true)
+            setPanOn(false)
+          }}
+          onTogglePan={() => {
+            setSelectionOn(false)
+            setPanOn(true)
+          }}
+          saveStatus={saveStatus}
+        />
+      </Panel>
+      <Panel position="bottom-center">
+        <ShapePanel />
+      </Panel>
+      <AiSidebar
+        isOpen={aiSidebarOpen}
+        onClose={onAiSidebarClose}
+        roomId={roomId}
+        nodes={nodes}
+        edges={edges}
       />
-      <Cursors />
-      <CanvasControlBar
-        selectionOn={selectionOn}
-        panOn={panOn}
-        onToggleSelection={() => {
-          setSelectionOn(true)
-          setPanOn(false)
-        }}
-        onTogglePan={() => {
-          setSelectionOn(false)
-          setPanOn(true)
-        }}
-      />
-      <ShapePanel />
     </ReactFlow>
   )
 }
@@ -218,9 +482,17 @@ interface CanvasProps {
   roomId: string
   templateToLoad: CanvasTemplate | null
   onTemplateLoaded: () => void
+  aiSidebarOpen: boolean
+  onAiSidebarClose: () => void
 }
 
-export function Canvas({ roomId, templateToLoad, onTemplateLoaded }: CanvasProps) {
+export function Canvas({
+  roomId,
+  templateToLoad,
+  onTemplateLoaded,
+  aiSidebarOpen,
+  onAiSidebarClose,
+}: CanvasProps) {
   return (
     <LiveblocksProvider
       authEndpoint={async (room) => {
@@ -238,15 +510,17 @@ export function Canvas({ roomId, templateToLoad, onTemplateLoaded }: CanvasProps
     >
       <RoomProvider
         id={roomId}
-        initialPresence={{ cursor: null, isThinking: false }}
-        initialStorage={{ nodes: [] }}
+        initialPresence={{ cursor: null, thinking: false }}
       >
         <ErrorBoundary fallback={<ErrorFallback />}>
           <ClientSideSuspense fallback={<Loading />}>
             <ReactFlowProvider>
               <CanvasInner
+                roomId={roomId}
                 templateToLoad={templateToLoad}
                 onTemplateLoaded={onTemplateLoaded}
+                aiSidebarOpen={aiSidebarOpen}
+                onAiSidebarClose={onAiSidebarClose}
               />
             </ReactFlowProvider>
           </ClientSideSuspense>

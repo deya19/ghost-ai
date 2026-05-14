@@ -9,7 +9,11 @@ import {
   Trash2,
   MousePointer2,
   Move,
+  Loader2,
+  Check,
+  AlertCircle,
 } from "lucide-react"
+import type { SaveStatus } from "@/hooks/use-canvas-autosave"
 import { useReactFlow } from "@xyflow/react"
 import {
   useUndo,
@@ -23,6 +27,7 @@ interface CanvasControlBarProps {
   panOn: boolean
   onToggleSelection: () => void
   onTogglePan: () => void
+  saveStatus?: SaveStatus
 }
 
 export function CanvasControlBar({
@@ -30,6 +35,7 @@ export function CanvasControlBar({
   panOn,
   onToggleSelection,
   onTogglePan,
+  saveStatus,
 }: CanvasControlBarProps) {
   const { zoomIn, zoomOut, fitView, getNodes, getEdges, deleteElements } = useReactFlow()
   const undo = useUndo()
@@ -45,8 +51,26 @@ export function CanvasControlBar({
     }
   }
 
+  const statusEl =
+    saveStatus === "saving" ? (
+      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Saving
+      </span>
+    ) : saveStatus === "saved" ? (
+      <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+        <Check className="h-3 w-3" />
+        Saved
+      </span>
+    ) : saveStatus === "error" ? (
+      <span className="flex items-center gap-1 text-[10px] text-destructive">
+        <AlertCircle className="h-3 w-3" />
+        Error
+      </span>
+    ) : null
+
   return (
-    <div className="nodrag nopan absolute bottom-20 left-4 z-10 flex items-center rounded-full border border-[#2a2a2a] bg-[#141414] px-2 py-1.5 shadow-lg">
+    <div className="nodrag nopan flex items-center gap-2 rounded-full border border-[#2a2a2a] bg-[#141414] px-2 py-1.5 shadow-lg">
       {/* Zoom controls */}
       <div className="flex items-center gap-1">
         <button
@@ -143,6 +167,13 @@ export function CanvasControlBar({
       >
         <Move className="h-4 w-4" />
       </button>
+
+      {statusEl && (
+        <>
+          <div className="mx-2 h-4 w-px bg-[#2a2a2a]" />
+          {statusEl}
+        </>
+      )}
     </div>
   )
 }

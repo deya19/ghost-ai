@@ -160,7 +160,7 @@ export function ShapePanel() {
 
   return (
     <>
-      <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2">
+      <div>
         <div className="flex items-center gap-1 rounded-full border border-[#2a2a2a] bg-[#141414] px-3 py-2 shadow-lg">
           {SHAPES.map((s) => (
             <button

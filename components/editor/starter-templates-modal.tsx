@@ -104,10 +104,10 @@ export function StarterTemplatesModal({
   onImport,
 }: StarterTemplatesModalProps) {
   function handleImport(template: CanvasTemplate) {
-    const confirmed = window.confirm(
-      "This will replace your current canvas. Continue?"
-    )
-    if (!confirmed) return
+    // const confirmed = window.confirm(
+    //   "This will add the template to your current canvas. Continue?"
+    // )
+    // if (!confirmed) return
     onImport(template)
     onOpenChange(false)
   }
@@ -121,7 +121,7 @@ export function StarterTemplatesModal({
         <DialogHeader>
           <DialogTitle className="text-white pl-2.5">Import Template</DialogTitle>
           <DialogDescription className="text-white/60 pl-2.5">
-            Choose a starter template to pre-populate your canvas. Any existing nodes will be replaced — use{" "}
+            Choose a starter template to add to your canvas. Existing nodes will stay in place — use{" "}
             <kbd className="rounded bg-[#2a2a2a] px-1 py-0.5 text-[10px] font-mono text-white/80">
               ⌘Z
             </kbd>{" "}
