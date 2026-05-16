@@ -4521,6 +4521,33 @@ var markdownEscapablesRegex = new RegExp(
   Object.keys(markdownEscapables).map((entity) => `\\${entity}`).join("|"),
   "g"
 );
+function toPlainLson(lson) {
+  if (lson instanceof LiveObject) {
+    const data = {};
+    for (const key of lson.keys()) {
+      const value = lson.get(key);
+      if (value !== void 0) {
+        data[key] = toPlainLson(value);
+      }
+    }
+    return { liveblocksType: "LiveObject", data };
+  } else if (lson instanceof LiveMap) {
+    return {
+      liveblocksType: "LiveMap",
+      data: Object.fromEntries(
+        [...lson].map(([key, value]) => [key, toPlainLson(value)])
+      )
+    };
+  } else if (lson instanceof LiveList) {
+    return {
+      liveblocksType: "LiveList",
+      data: [...lson].map((item) => toPlainLson(item))
+    };
+  } else {
+    return lson;
+  }
+}
+__name(toPlainLson, "toPlainLson");
 function makeAbortController(externalSignal) {
   const ctl = new AbortController();
   return {
@@ -9191,6 +9218,13 @@ var NODE_COLORS = [
   // teal
 ];
 
+// node_modules/@liveblocks/client/dist/index.js
+init_esm();
+var PKG_NAME3 = "@liveblocks/client";
+var PKG_VERSION3 = "3.19.0";
+var PKG_FORMAT3 = "esm";
+detectDupes(PKG_NAME3, PKG_VERSION3, PKG_FORMAT3);
+
 // trigger/design-agent.ts
 var AI_USER_ID = "ghost-ai";
 var AI_USER_INFO = { name: "Ghost AI", avatar: "", color: "#6457f9" };
@@ -9384,6 +9418,32 @@ ${canvasContext}`,
         status: "thinking"
       }).catch(() => {
       });
+      try {
+        await lb.getRoom(payload.roomId);
+      } catch {
+        await lb.createRoom(payload.roomId, { defaultAccesses: ["room:write"] });
+      }
+      try {
+        await lb.getStorageDocument(payload.roomId);
+      } catch {
+        try {
+          await lb.initializeStorageDocument(
+            payload.roomId,
+            toPlainLson(
+              new LiveObject({
+                flow: new LiveObject({
+                  nodes: new LiveMap(),
+                  edges: new LiveMap()
+                })
+              })
+            )
+          );
+        } catch (initErr) {
+          const msg = initErr instanceof Error ? initErr.message : String(initErr);
+          console.error("[design-agent] Failed to initialize storage:", initErr);
+          throw new Error(`Canvas storage could not be initialized: ${msg}`);
+        }
+      }
       await lb.mutateStorage(payload.roomId, async ({ root }) => {
         const flow = root.get("flow");
         if (!flow) return;

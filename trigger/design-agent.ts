@@ -4,7 +4,7 @@ import { generateText, tool } from "ai";
 import { z } from "zod";
 import { getLiveblocksClient } from "@/lib/liveblocks";
 import { NODE_COLORS } from "@/types/canvas";
-import { LiveObject } from "@liveblocks/node";
+import { LiveObject, LiveMap, toPlainLson } from "@liveblocks/client";
 
 const AI_USER_ID = "ghost-ai";
 const AI_USER_INFO = { name: "Ghost AI", avatar: "", color: "#6457f9" };
@@ -221,6 +221,34 @@ export const designAgent = task({
           status: "thinking",
         })
         .catch(() => {});
+
+      // Ensure room exists with initialized storage
+      try {
+        await lb.getRoom(payload.roomId);
+      } catch {
+        await lb.createRoom(payload.roomId, { defaultAccesses: ["room:write"] });
+      }
+      try {
+        await lb.getStorageDocument(payload.roomId);
+      } catch {
+        try {
+          await lb.initializeStorageDocument(
+            payload.roomId,
+            toPlainLson(
+              new LiveObject({
+                flow: new LiveObject({
+                  nodes: new LiveMap(),
+                  edges: new LiveMap(),
+                }),
+              })
+            ) as Parameters<typeof lb.initializeStorageDocument>[1]
+          );
+        } catch (initErr: unknown) {
+          const msg = initErr instanceof Error ? initErr.message : String(initErr);
+          console.error("[design-agent] Failed to initialize storage:", initErr);
+          throw new Error(`Canvas storage could not be initialized: ${msg}`);
+        }
+      }
 
       await lb.mutateStorage(payload.roomId, async ({ root }) => {
         const flow = root.get("flow") as unknown as {

@@ -1,5 +1,5 @@
 {
-  "configPath": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-c3MZhG\\Desktop\\ghost-ai\\trigger.config.mjs",
+  "configPath": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-UpHUco\\Desktop\\ghost-ai\\trigger.config.mjs",
   "customConditions": [
   ],
   "prompts": [
@@ -10,7 +10,7 @@
   "runtimeVersion": "22.18.0",
   "tasks": [
     {
-      "entryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-c3MZhG\\Desktop\\ghost-ai\\trigger\\design-agent.mjs",
+      "entryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-UpHUco\\Desktop\\ghost-ai\\trigger\\design-agent.mjs",
       "filePath": "trigger/design-agent.ts",
       "id": "design-agent",
       "maxDuration": 3600,
@@ -23,7 +23,7 @@
       }
     },
     {
-      "entryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-c3MZhG\\Desktop\\ghost-ai\\trigger\\generate-spec.mjs",
+      "entryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-UpHUco\\Desktop\\ghost-ai\\trigger\\generate-spec.mjs",
       "filePath": "trigger/generate-spec.ts",
       "id": "generate-spec",
       "maxDuration": 3600,
@@ -37,8 +37,8 @@
     }
   ],
   "timings": {
-    "trigger/design-agent.ts": 313.4517000000001,
-    "trigger/generate-spec.ts": 240.15440000000035
+    "trigger/design-agent.ts": 137.85379999999998,
+    "trigger/generate-spec.ts": 150.1698
   },
-  "workerEntryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-c3MZhG\\AppData\\Local\\npm-cache\\_npx\\f51a09bd0abf5f10\\node_modules\\trigger.dev\\dist\\esm\\entryPoints\\dev-run-worker.mjs"
+  "workerEntryPoint": "C:\\Users\\deyas\\Desktop\\ghost-ai\\.trigger\\tmp\\build-UpHUco\\AppData\\Local\\npm-cache\\_npx\\f51a09bd0abf5f10\\node_modules\\trigger.dev\\dist\\esm\\entryPoints\\dev-run-worker.mjs"
 }

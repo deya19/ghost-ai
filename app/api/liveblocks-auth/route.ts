@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth, currentUser } from "@clerk/nextjs/server"
 import { getLiveblocksClient, getUserColor } from "@/lib/liveblocks"
 import { getAccessibleProject } from "@/lib/project-access"
+import { LiveObject, LiveMap, toPlainLson } from "@liveblocks/client"
 
 export async function POST(request: Request) {
   const { userId } = await auth()
@@ -37,6 +38,17 @@ export async function POST(request: Request) {
     await client.createRoom(roomId, {
       defaultAccesses: ["room:write"],
     })
+    await client.initializeStorageDocument(
+      roomId,
+      toPlainLson(
+        new LiveObject({
+          flow: new LiveObject({
+            nodes: new LiveMap(),
+            edges: new LiveMap(),
+          }),
+        })
+      ) as Parameters<typeof client.initializeStorageDocument>[1]
+    )
   }
 
   // Ensure ai-chat feed exists
